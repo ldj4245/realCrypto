@@ -1,0 +1,65 @@
+package com.realcrypto.adapter.out.persistence.entity;
+
+import java.time.LocalDateTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.AccessLevel;
+
+import com.realcrypto.application.port.out.ExchangeTicker;
+
+@Entity
+@Table(name = "crypto_prices")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class CryptoPrice {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String market; // KRW-BTC, BTCUSDT
+
+    @Column(nullable = false)
+    private String exchange; // upbit, binance
+
+    private Double openingPrice;
+    private Double highPrice;
+    private Double lowPrice;
+    private Double tradePrice;
+
+    @Column(nullable = false)
+    private LocalDateTime timestamp; // 데이터 수집 시간
+
+    // 1. 내부 조립용 빌더
+    @Builder
+    private CryptoPrice(String market, String exchange, Double openingPrice,
+            Double highPrice, Double lowPrice, Double tradePrice, LocalDateTime timestamp) {
+        this.market = market;
+        this.exchange = exchange;
+        this.openingPrice = openingPrice;
+        this.highPrice = highPrice;
+        this.lowPrice = lowPrice;
+        this.tradePrice = tradePrice;
+        this.timestamp = timestamp;
+    }
+
+    public static CryptoPrice from(ExchangeTicker ticker) {
+        return CryptoPrice.builder()
+                .market(ticker.getMarket())
+                .exchange(ticker.getExchangeName())
+                .openingPrice(ticker.getOpeningPrice())
+                .highPrice(ticker.getHighPrice())
+                .lowPrice(ticker.getLowPrice())
+                .tradePrice(ticker.getTradePrice())
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+}
