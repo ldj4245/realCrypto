@@ -5,7 +5,9 @@ import org.springframework.stereotype.Repository;
 
 import com.realcrypto.domain.CryptoPrice;
 
+import com.realcrypto.application.port.out.CryptoPriceSavePort;
+
 @Repository
-public interface CryptoPriceRepository extends JpaRepository<CryptoPrice, Long> {
+public interface CryptoPriceRepository extends JpaRepository<CryptoPrice, Long>, CryptoPriceSavePort {
 
 }

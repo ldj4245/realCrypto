@@ -6,7 +6,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.realcrypto.domain.CollectTarget;
-import com.realcrypto.application.port.in.PriceCollectUseCase;
+import com.realcrypto.application.service.PriceCollectService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PriceScheduler {
 
-    private final PriceCollectUseCase priceCollectUseCase; // 🔌 사령실 UseCase 입력 포트만 의존!
+    private final PriceCollectService priceCollectService;
 
     // 10초 마다 작동
     @Scheduled(fixedRate = 10000)
@@ -24,11 +24,11 @@ public class PriceScheduler {
         log.info("[시세 수집 알람] 수집 활성화된 코인 리스트를 조회합니다.");
 
         // 💡 DB 직접 조회가 아닌, UseCase의 입력 포트를 통해 대상을 가져옴!
-        List<CollectTarget> activeTargets = priceCollectUseCase.getActiveTargets();
+        List<CollectTarget> activeTargets = priceCollectService.getActiveTargets();
 
         for (CollectTarget target : activeTargets) {
             try {
-                priceCollectUseCase.collect(target);
+                priceCollectService.collect(target);
             } catch (Exception e) {
                 log.error("[{}] {} 시세 수집 중 장애 발생 : {}", target.getExchange(), target.getMarket(), e.getMessage());
             }

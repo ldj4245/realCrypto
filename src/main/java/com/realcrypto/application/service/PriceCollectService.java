@@ -4,10 +4,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.realcrypto.adapter.out.persistence.CryptoPriceRepository;
+import com.realcrypto.application.port.out.CryptoPriceSavePort;
 import com.realcrypto.domain.CollectTarget;
 import com.realcrypto.domain.CryptoPrice;
-import com.realcrypto.application.port.in.PriceCollectUseCase;
 import com.realcrypto.application.port.out.CollectTargetQueryPort;
 import com.realcrypto.application.port.out.ExchangeClientPort;
 import com.realcrypto.global.error.BusinessException;
@@ -18,24 +17,22 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class PriceCollectService implements PriceCollectUseCase {
+public class PriceCollectService {
 
     private final List<ExchangeClientPort> clients;
-    private final CryptoPriceRepository cryptoPriceRepository;
+    private final CryptoPriceSavePort cryptoPriceSavePort;
     private final CollectTargetQueryPort collectTargetQueryPort; // 💡 DB 직접 의존을 포트로 대체!
 
-    @Override
     @Transactional(readOnly = true)
     public List<CollectTarget> getActiveTargets() {
         return collectTargetQueryPort.findActiveTargets();
     }
 
-    @Override
     public void collect(CollectTarget target) {
         for (ExchangeClientPort client : clients) {
             if (client.supports(target.getExchange())) {
                 CryptoPrice price = client.fetchPrice(target.getMarket());
-                cryptoPriceRepository.save(price);
+                cryptoPriceSavePort.save(price);
                 return;
             }
         }
