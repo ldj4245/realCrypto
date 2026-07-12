@@ -6,13 +6,15 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.ResourceAccessException;
 
-import com.realcrypto.adapter.out.persistence.entity.CryptoPrice;
+import com.realcrypto.domain.CryptoPrice;
 import com.realcrypto.global.error.BusinessException;
 import com.realcrypto.global.error.ErrorCode;
 import com.realcrypto.adapter.out.exchange.dto.BinanceTickerDto;
 
+import com.realcrypto.application.port.out.ExchangeClientPort;
+
 @Component
-public class BinanceExchangeClient implements ExchangeClient {
+public class BinanceExchangeClient implements ExchangeClientPort {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -34,9 +36,15 @@ public class BinanceExchangeClient implements ExchangeClient {
             if (response == null) {
                 throw new BusinessException("지원하지 않는 바이낸스 마켓입니다: " + market, ErrorCode.UNSUPPORTED_MARKET);
             }
-            
-            return CryptoPrice.from(response);
-            
+            return CryptoPrice.builder()
+                    .market(response.getMarket())
+                    .exchange(response.getExchangeName())
+                    .openingPrice(response.getOpeningPrice())
+                    .highPrice(response.getHighPrice())
+                    .lowPrice(response.getLowPrice())
+                    .tradePrice(response.getTradePrice())
+                    .timestamp(java.time.LocalDateTime.now())
+                    .build();
         } catch (HttpStatusCodeException e) {
             // 1. API 호출 제한 (HTTP 429 Too Many Requests) 감지
             if (e.getStatusCode().value() == 429) {

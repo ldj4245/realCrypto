@@ -1,6 +1,6 @@
 package com.realcrypto.application.port.out;
 
-import com.realcrypto.adapter.out.persistence.entity.CryptoPrice;
+import com.realcrypto.domain.CryptoPrice;
 import java.util.List;
 
 public interface CryptoPriceQueryPort {

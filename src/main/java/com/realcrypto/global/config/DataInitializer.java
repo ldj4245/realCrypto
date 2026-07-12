@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.realcrypto.adapter.out.persistence.CollectTargetRepository;
-import com.realcrypto.adapter.out.persistence.entity.CollectTarget;
+import com.realcrypto.domain.CollectTarget;
 
 import lombok.extern.slf4j.Slf4j;
 

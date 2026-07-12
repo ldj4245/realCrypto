@@ -1,4 +1,4 @@
-package com.realcrypto.adapter.out.persistence.entity;
+package com.realcrypto.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

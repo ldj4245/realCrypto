@@ -2,8 +2,8 @@ package com.realcrypto.adapter.out.persistence;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.realcrypto.adapter.out.persistence.entity.CryptoPrice;
-import com.realcrypto.adapter.out.persistence.entity.QCryptoPrice;
+import com.realcrypto.domain.CryptoPrice;
+import com.realcrypto.domain.QCryptoPrice;
 import com.realcrypto.application.port.out.CryptoPriceQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;

@@ -1,12 +1,16 @@
 package com.realcrypto.adapter.out.persistence;
 
 import java.util.List;
-
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+import com.realcrypto.domain.CollectTarget;
+import com.realcrypto.application.port.out.CollectTargetQueryPort;
 
-import com.realcrypto.adapter.out.persistence.entity.CollectTarget;
+@Repository
+public interface CollectTargetRepository extends JpaRepository<CollectTarget, Long>, CollectTargetQueryPort {
 
-public interface CollectTargetRepository extends JpaRepository<CollectTarget, Long> {
-
-    List<CollectTarget> findByIsActiveTrue();
+    @Override
+    @Query("select c from CollectTarget c where c.isActive = true")
+    List<CollectTarget> findActiveTargets();
 }

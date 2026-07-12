@@ -1,4 +1,4 @@
-package com.realcrypto.adapter.out.persistence.entity;
+package com.realcrypto.domain;
 
 import java.time.LocalDateTime;
 import jakarta.persistence.Column;
@@ -11,8 +11,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AccessLevel;
-
-import com.realcrypto.application.port.out.ExchangeTicker;
 
 @Entity
 @Table(name = "crypto_prices")
@@ -49,17 +47,5 @@ public class CryptoPrice {
         this.lowPrice = lowPrice;
         this.tradePrice = tradePrice;
         this.timestamp = timestamp;
-    }
-
-    public static CryptoPrice from(ExchangeTicker ticker) {
-        return CryptoPrice.builder()
-                .market(ticker.getMarket())
-                .exchange(ticker.getExchangeName())
-                .openingPrice(ticker.getOpeningPrice())
-                .highPrice(ticker.getHighPrice())
-                .lowPrice(ticker.getLowPrice())
-                .tradePrice(ticker.getTradePrice())
-                .timestamp(LocalDateTime.now())
-                .build();
     }
 }

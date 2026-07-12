@@ -6,13 +6,15 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.ResourceAccessException;
 
-import com.realcrypto.adapter.out.persistence.entity.CryptoPrice;
+import com.realcrypto.domain.CryptoPrice;
 import com.realcrypto.global.error.BusinessException;
 import com.realcrypto.global.error.ErrorCode;
 import com.realcrypto.adapter.out.exchange.dto.UpbitTickerDto;
 
+import com.realcrypto.application.port.out.ExchangeClientPort;
+
 @Component
-public class UpbitExchangeClient implements ExchangeClient {
+public class UpbitExchangeClient implements ExchangeClientPort {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -35,9 +37,15 @@ public class UpbitExchangeClient implements ExchangeClient {
                 // 1. 존재하지 않거나 유효하지 않은 마켓을 요청했을 때
                 throw new BusinessException("지원하지 않는 업비트 마켓입니다: " + market, ErrorCode.UNSUPPORTED_MARKET);
             }
-            
-            return CryptoPrice.from(response[0]);
-            
+            return CryptoPrice.builder()
+                    .market(response[0].getMarket())
+                    .exchange(response[0].getExchangeName())
+                    .openingPrice(response[0].getOpeningPrice())
+                    .highPrice(response[0].getHighPrice())
+                    .lowPrice(response[0].getLowPrice())
+                    .tradePrice(response[0].getTradePrice())
+                    .timestamp(java.time.LocalDateTime.now())
+                    .build();
         } catch (HttpStatusCodeException e) {
             // 2. API 호출 제한 (HTTP 429 Too Many Requests) 감지
             if (e.getStatusCode().value() == 429) {
