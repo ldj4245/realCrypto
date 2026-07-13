@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="header">
+<header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+    <div class="flex items-center gap-3">
+        <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+            <i class="fa-solid fa-chart-line text-white text-lg"></i>
+        </div>
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                REALCRYPTO <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 tracking-wider">LIVE</span>
+            </h1>
+            <p class="text-xs text-slate-400">Hexagonal Architecture Real-time Dashboard</p>
+        </div>
+    </div>
+    
+    <div class="flex flex-wrap items-center gap-4">
+        <!-- USD/KRW Exchange Rate Config -->
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-glassBorder text-xs text-slate-300">
+            <i class="fa-solid fa-dollar-sign text-emerald-400"></i>
+            <span>환율 설정:</span>
+            <input type="number" id="exchangeRateInput" value="1380" class="w-16 bg-transparent text-white font-semibold text-right focus:outline-none" step="1" onchange="calculateArbitrage()">
+            <span class="text-slate-500">KRW</span>
+        </div>
+        
+        <!-- Status & Timer -->
+        <div id="statusBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400">
+            <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span id="updateTimer">5초 후 갱신</span>
+        </div>
+        
+        <!-- Force Refresh Button -->
+        <button onclick="refreshData()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-glassBorder transition duration-200 text-slate-300 hover:text-white">
+            <i class="fa-solid fa-arrows-rotate"></i>
+        </button>
+    </div>
+</header>
+</html>

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head}"></head>
+<body class="font-sans antialiased">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        
+        <!-- Header Fragment -->
+        <header th:replace="~{fragments/header :: header}"></header>
+
+        <!-- Main Stats Summary (Arbitrage Alert) -->
+        <section id="arbitragePanel" class="glass-panel rounded-3xl p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-6 transition duration-300 hover:border-slate-700/60">
+            <div class="flex items-center gap-4">
+                <div class="h-14 w-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-2xl">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                </div>
+                <div>
+                    <h2 class="text-slate-400 text-xs font-medium uppercase tracking-wider">김치 프리미엄 (UPBIT vs BINANCE)</h2>
+                    <p class="text-sm text-slate-300 mt-1">국내외 거래소 간 비트코인(BTC) 시세 격차</p>
+                </div>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-8 md:gap-12">
+                <div class="text-right">
+                    <span class="text-slate-400 text-xs block">업비트 (KRW)</span>
+                    <span id="upbitSummaryPrice" class="text-xl font-bold tracking-tight text-white" th:text="${latestUpbit != null ? #numbers.formatInteger(latestUpbit.tradePrice, 3, 'COMMA') + ' ₩' : '-'}">-</span>
+                </div>
+                <div class="text-slate-600 text-xl font-light">vs</div>
+                <div class="text-right">
+                    <span class="text-slate-400 text-xs block">바이낸스 (USDT 환산)</span>
+                    <span id="binanceSummaryPrice" class="text-xl font-bold tracking-tight text-slate-300"
+                          th:text="${latestBinance != null ? #numbers.formatInteger(latestBinance.tradePrice * 1380, 3, 'COMMA') + ' ₩ (' + #numbers.formatDecimal(latestBinance.tradePrice, 1, 'COMMA', 2, 'POINT') + ' $)' : '-'}">-</span>
+                </div>
+                <div class="h-10 w-px bg-slate-800 hidden sm:block"></div>
+                <div class="text-right bg-cyan-500/5 px-4 py-2 rounded-2xl border border-cyan-500/10"
+                     th:with="binanceInKRW=${latestBinance != null ? latestBinance.tradePrice * 1380 : 1},
+                              premium=${latestUpbit != null && latestBinance != null ? ((latestUpbit.tradePrice / binanceInKRW) - 1) * 100 : 0}">
+                    <span class="text-cyan-400 text-xs block font-semibold tracking-wide">프리미엄 격차율</span>
+                    <span id="premiumRate" th:class="${premium >= 0 ? 'text-2xl font-black text-emerald-400 glow-text-emerald' : 'text-2xl font-black text-rose-400 glow-text-rose'}"
+                          th:text="${latestUpbit != null && latestBinance != null ? (premium >= 0 ? '+' : '') + #numbers.formatDecimal(premium, 1, 2) + ' %' : '- %'}">- %</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left Side: Exchange Cards -->
+            <div class="lg:col-span-1 flex flex-col gap-6">
+                <h3 class="text-sm font-semibold tracking-wider text-slate-400 uppercase">최근 수집 시세</h3>
+                
+                <!-- Upbit Card -->
+                <div class="glass-panel rounded-3xl p-6 relative overflow-hidden group transition duration-300 hover:border-blue-500/30">
+                    <div class="absolute -right-4 -bottom-4 text-slate-800/10 text-8xl font-black select-none pointer-events-none transition duration-300 group-hover:scale-110">
+                        UPBIT
+                    </div>
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-semibold text-blue-400">UPBIT</span>
+                        <span id="upbitTime" class="text-slate-500 text-xs" th:text="${latestUpbit != null ? #temporals.format(latestUpbit.timestamp, 'HH:mm:ss') : '-'}">-</span>
+                    </div>
+                    <div class="mb-4">
+                        <span id="upbitMarket" class="text-slate-400 text-xs block" th:text="${latestUpbit != null ? latestUpbit.market : 'KRW-BTC'}">KRW-BTC</span>
+                        <span id="upbitPrice" class="text-3xl font-bold tracking-tight text-white" th:text="${latestUpbit != null ? #numbers.formatInteger(latestUpbit.tradePrice, 3, 'COMMA') + ' ₩' : '-'}">-</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 border-t border-slate-800/50 pt-4 text-xs text-slate-400">
+                        <div>
+                            <span>고가:</span> <span id="upbitHigh" class="text-rose-400 font-semibold block mt-0.5" th:text="${latestUpbit != null ? #numbers.formatInteger(latestUpbit.highPrice, 3, 'COMMA') + ' ₩' : '-'}">-</span>
+                        </div>
+                        <div>
+                            <span>저가:</span> <span id="upbitLow" class="text-blue-400 font-semibold block mt-0.5" th:text="${latestUpbit != null ? #numbers.formatInteger(latestUpbit.lowPrice, 3, 'COMMA') + ' ₩' : '-'}">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Binance Card -->
+                <div class="glass-panel rounded-3xl p-6 relative overflow-hidden group transition duration-300 hover:border-yellow-500/30">
+                    <div class="absolute -right-4 -bottom-4 text-slate-800/10 text-8xl font-black select-none pointer-events-none transition duration-300 group-hover:scale-110">
+                        BINANCE
+                    </div>
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-xs font-semibold text-yellow-400">BINANCE</span>
+                        <span id="binanceTime" class="text-slate-500 text-xs" th:text="${latestBinance != null ? #temporals.format(latestBinance.timestamp, 'HH:mm:ss') : '-'}">-</span>
+                    </div>
+                    <div class="mb-4">
+                        <span id="binanceMarket" class="text-slate-400 text-xs block" th:text="${latestBinance != null ? latestBinance.market : 'BTCUSDT'}">BTCUSDT</span>
+                        <span id="binancePrice" class="text-3xl font-bold tracking-tight text-white" th:text="${latestBinance != null ? #numbers.formatDecimal(latestBinance.tradePrice, 1, 'COMMA', 2, 'POINT') + ' $' : '-'}">-</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 border-t border-slate-800/50 pt-4 text-xs text-slate-400">
+                        <div>
+                            <span>고가:</span> <span id="binanceHigh" class="text-rose-400 font-semibold block mt-0.5" th:text="${latestBinance != null ? #numbers.formatDecimal(latestBinance.highPrice, 1, 'COMMA', 2, 'POINT') + ' $' : '-'}">-</span>
+                        </div>
+                        <div>
+                            <span>저가:</span> <span id="binanceLow" class="text-blue-400 font-semibold block mt-0.5" th:text="${latestBinance != null ? #numbers.formatDecimal(latestBinance.lowPrice, 1, 'COMMA', 2, 'POINT') + ' $' : '-'}">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Trend Chart -->
+            <div class="lg:col-span-2 flex flex-col gap-6">
+                <h3 class="text-sm font-semibold tracking-wider text-slate-400 uppercase">수집 가격 변동 트렌드 (KRW 환산 기준)</h3>
+                
+                <div class="glass-panel rounded-3xl p-6 flex-1 flex flex-col justify-center min-h-[350px]">
+                    <div class="relative w-full h-[320px]">
+                        <canvas id="priceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- History Table Section -->
+        <section class="mt-12">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-sm font-semibold tracking-wider text-slate-400 uppercase">실시간 수집 로그 (최근 20개 내역)</h3>
+                <span class="text-xs text-slate-500">최신순 정렬</span>
+            </div>
+            
+            <div class="glass-panel rounded-3xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm text-slate-300">
+                        <thead>
+                            <tr class="bg-slate-900/40 border-b border-slate-800 text-slate-400 font-medium">
+                                <th class="py-4 px-6">ID</th>
+                                <th class="py-4 px-6">거래소</th>
+                                <th class="py-4 px-6">마켓</th>
+                                <th class="py-4 px-6">현재가</th>
+                                <th class="py-4 px-6">고가 / 저가</th>
+                                <th class="py-4 px-6">수집 시간</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <tr th:each="price : ${prices}" class="border-b border-slate-800/50 hover:bg-slate-800/10 transition duration-150">
+                                <td class="py-3.5 px-6 text-slate-500" th:text="${price.id}">1</td>
+                                <td class="py-3.5 px-6">
+                                    <span th:if="${price.exchange == 'UPBIT'}" class="px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs text-blue-400 font-semibold">UPBIT</span>
+                                    <span th:if="${price.exchange == 'BINANCE'}" class="px-2 py-0.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-xs text-yellow-400 font-semibold">BINANCE</span>
+                                </td>
+                                <td class="py-3.5 px-6 font-semibold" th:text="${price.market}">KRW-BTC</td>
+                                <td class="py-3.5 px-6 font-bold text-white" th:text="${price.exchange == 'UPBIT' ? #numbers.formatInteger(price.tradePrice, 3, 'COMMA') + ' ₩' : #numbers.formatDecimal(price.tradePrice, 1, 'COMMA', 2, 'POINT') + ' $'}">50,000,000</td>
+                                <td class="py-3.5 px-6 text-xs">
+                                    <span class="text-rose-400" th:text="${price.exchange == 'UPBIT' ? #numbers.formatInteger(price.highPrice, 3, 'COMMA') + ' ₩' : #numbers.formatDecimal(price.highPrice, 1, 'COMMA', 2, 'POINT') + ' $'}">-</span> / 
+                                    <span class="text-blue-400" th:text="${price.exchange == 'UPBIT' ? #numbers.formatInteger(price.lowPrice, 3, 'COMMA') + ' ₩' : #numbers.formatDecimal(price.lowPrice, 1, 'COMMA', 2, 'POINT') + ' $'}">-</span>
+                                </td>
+                                <td class="py-3.5 px-6 text-slate-400" th:text="${#temporals.format(price.timestamp, 'HH:mm:ss')}">12:00:00</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(prices)}">
+                                <td colspan="6" class="py-8 text-center text-slate-500">데이터가 존재하지 않습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="mt-16 text-center text-slate-600 text-xs border-t border-slate-900 pt-8">
+            <p>© 2026 RealCrypto System. Hexagonal Clean Architecture Study Dashboard.</p>
+        </footer>
+
+    </div>
+
+    <script th:inline="javascript">
+        let countdown = 5;
+        let priceChartInstance = null;
+
+        // Thymeleaf inlined initial values
+        let upbitLastPrice = /*[[${latestUpbit != null ? latestUpbit.tradePrice : 0}]]*/ 0;
+        let binanceLastPrice = /*[[${latestBinance != null ? latestBinance.tradePrice : 0}]]*/ 0;
+        const initialPrices = /*[[${prices}]]*/ [];
+
+        // Formatter functions
+        function formatKRW(val) {
+            if (!val) return "-";
+            return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(val);
+        }
+
+        function formatUSD(val) {
+            if (!val) return "-";
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+        }
+
+        function formatTime(isoString) {
+            if (!isoString) return "-";
+            const date = new Date(isoString);
+            return date.toLocaleTimeString('ko-KR', { hour12: false });
+        }
+
+        // Live timer loop
+        setInterval(() => {
+            countdown--;
+            if (countdown <= 0) {
+                refreshData();
+                countdown = 5;
+            }
+            document.getElementById('updateTimer').innerText = `${countdown}초 후 갱신`;
+        }, 1000);
+
+        // Calculate Arbitrage
+        function calculateArbitrage() {
+            const exchangeRate = parseFloat(document.getElementById('exchangeRateInput').value) || 1380;
+            
+            if (upbitLastPrice > 0 && binanceLastPrice > 0) {
+                // Convert Binance price to KRW
+                const binanceInKRW = binanceLastPrice * exchangeRate;
+                
+                document.getElementById('upbitSummaryPrice').innerText = formatKRW(upbitLastPrice);
+                document.getElementById('binanceSummaryPrice').innerText = formatKRW(binanceInKRW) + ` (${formatUSD(binanceLastPrice)})`;
+                
+                // Premium percentage
+                const premium = ((upbitLastPrice / binanceInKRW) - 1) * 100;
+                const premiumText = premium.toFixed(2) + " %";
+                
+                const premiumEl = document.getElementById('premiumRate');
+                premiumEl.innerText = (premium >= 0 ? "+" : "") + premiumText;
+                
+                // Color formatting according to positive/negative values
+                if (premium >= 0) {
+                    premiumEl.className = "text-2xl font-black text-emerald-400 glow-text-emerald";
+                    document.getElementById('arbitragePanel').className = "glass-panel rounded-3xl p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-6 transition duration-300 border-emerald-500/20 hover:border-emerald-500/40";
+                } else {
+                    premiumEl.className = "text-2xl font-black text-rose-400 glow-text-rose";
+                    document.getElementById('arbitragePanel').className = "glass-panel rounded-3xl p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-6 transition duration-300 border-rose-500/20 hover:border-rose-500/40";
+                }
+            }
+        }
+
+        // Fetch data from API
+        function refreshData() {
+            fetch('/api/prices?limit=50')
+                .then(res => res.json())
+                .then(data => {
+                    if (!data || data.length === 0) return;
+                    
+                    renderLogTable(data);
+                    updateCards(data);
+                    renderChart(data);
+                })
+                .catch(err => {
+                    console.error("데이터 갱신 에러:", err);
+                    document.getElementById('statusBadge').className = "flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-400";
+                    document.getElementById('statusBadge').innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> 연결 장애`;
+                });
+        }
+
+        // Update Dashboard Cards
+        function updateCards(prices) {
+            // Find latest Upbit and Binance prices
+            const upbitPrice = prices.find(p => p.exchange === 'UPBIT');
+            const binancePrice = prices.find(p => p.exchange === 'BINANCE');
+            
+            if (upbitPrice) {
+                upbitLastPrice = upbitPrice.tradePrice;
+                document.getElementById('upbitPrice').innerText = formatKRW(upbitPrice.tradePrice);
+                document.getElementById('upbitHigh').innerText = formatKRW(upbitPrice.highPrice);
+                document.getElementById('upbitLow').innerText = formatKRW(upbitPrice.lowPrice);
+                document.getElementById('upbitTime').innerText = formatTime(upbitPrice.timestamp);
+                document.getElementById('upbitMarket').innerText = upbitPrice.market;
+            }
+            
+            if (binancePrice) {
+                binanceLastPrice = binancePrice.tradePrice;
+                document.getElementById('binancePrice').innerText = formatUSD(binancePrice.tradePrice);
+                document.getElementById('binanceHigh').innerText = formatUSD(binancePrice.highPrice);
+                document.getElementById('binanceLow').innerText = formatUSD(binancePrice.lowPrice);
+                document.getElementById('binanceTime').innerText = formatTime(binancePrice.timestamp);
+                document.getElementById('binanceMarket').innerText = binancePrice.market;
+            }
+            
+            calculateArbitrage();
+        }
+
+        // Render logs in the table
+        function renderLogTable(prices) {
+            const tableBody = document.getElementById('historyTableBody');
+            let rowsHtml = "";
+            
+            // Limit to 20 items for table display
+            const displayList = prices.slice(0, 20);
+            
+            displayList.forEach(p => {
+                const isUpbit = p.exchange === 'UPBIT';
+                const exchangeBadge = isUpbit 
+                    ? '<span class="px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs text-blue-400 font-semibold">UPBIT</span>'
+                    : '<span class="px-2 py-0.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-xs text-yellow-400 font-semibold">BINANCE</span>';
+                
+                const currentPriceText = isUpbit ? formatKRW(p.tradePrice) : formatUSD(p.tradePrice);
+                const highLowText = isUpbit 
+                    ? `<span class="text-rose-400">${formatKRW(p.highPrice)}</span> / <span class="text-blue-400">${formatKRW(p.lowPrice)}</span>`
+                    : `<span class="text-rose-400">${formatUSD(p.highPrice)}</span> / <span class="text-blue-400">${formatUSD(p.lowPrice)}</span>`;
+                
+                rowsHtml += `
+                    <tr class="border-b border-slate-800/50 hover:bg-slate-800/10 transition duration-150">
+                        <td class="py-3.5 px-6 text-slate-500">${p.id}</td>
+                        <td class="py-3.5 px-6">${exchangeBadge}</td>
+                        <td class="py-3.5 px-6 font-semibold">${p.market}</td>
+                        <td class="py-3.5 px-6 font-bold text-white">${currentPriceText}</td>
+                        <td class="py-3.5 px-6 text-xs">${highLowText}</td>
+                        <td class="py-3.5 px-6 text-slate-400">${formatTime(p.timestamp)}</td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.innerHTML = rowsHtml;
+        }
+
+        // Render dynamic trend chart
+        function renderChart(prices) {
+            const exchangeRate = parseFloat(document.getElementById('exchangeRateInput').value) || 1380;
+            
+            // Extract raw data points, sorted by time ascending
+            const reversedPrices = [...prices].reverse();
+            
+            // We only map BTC entries for comparison
+            const upbitHistory = reversedPrices.filter(p => p.exchange === 'UPBIT' && p.market === 'KRW-BTC');
+            const binanceHistory = reversedPrices.filter(p => p.exchange === 'BINANCE' && p.market === 'BTCUSDT');
+            
+            // Generate distinct timeline labels
+            const labels = [];
+            const upbitData = [];
+            const binanceData = [];
+            
+            // Gather timeline aligned by timestamps
+            const maxPoints = Math.max(upbitHistory.length, binanceHistory.length);
+            const sliceCount = Math.min(maxPoints, 15); // Show latest 15 points in chart
+            
+            const upbitSlice = upbitHistory.slice(-sliceCount);
+            const binanceSlice = binanceHistory.slice(-sliceCount);
+            
+            for (let i = 0; i < sliceCount; i++) {
+                const uPt = upbitSlice[i];
+                const bPt = binanceSlice[i];
+                
+                let timeStr = "";
+                if (uPt) {
+                    timeStr = formatTime(uPt.timestamp);
+                    upbitData.push(uPt.tradePrice);
+                } else {
+                    upbitData.push(null);
+                }
+                
+                if (bPt) {
+                    if (!timeStr) timeStr = formatTime(bPt.timestamp);
+                    // Convert binance price to KRW
+                    binanceData.push(bPt.tradePrice * exchangeRate);
+                } else {
+                    binanceData.push(null);
+                }
+                
+                labels.push(timeStr);
+            }
+
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            
+            if (priceChartInstance) {
+                // Update existing chart instance to prevent canvas leakage
+                priceChartInstance.data.labels = labels;
+                priceChartInstance.data.datasets[0].data = upbitData;
+                priceChartInstance.data.datasets[1].data = binanceData;
+                priceChartInstance.update('none'); // silent update
+            } else {
+                priceChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'UPBIT BTC (KRW)',
+                                data: upbitData,
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.3,
+                                pointBackgroundColor: '#3b82f6',
+                                pointBorderColor: '#fff',
+                                pointRadius: 4,
+                            },
+                            {
+                                label: 'BINANCE BTC (KRW 환산)',
+                                data: binanceData,
+                                borderColor: '#f59e0b',
+                                backgroundColor: 'rgba(245, 158, 11, 0.05)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.3,
+                                pointBackgroundColor: '#f59e0b',
+                                pointBorderColor: '#fff',
+                                pointRadius: 4,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#94a3b8',
+                                    font: {
+                                        family: 'Outfit',
+                                        weight: 'bold'
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                                titleFont: { family: 'Outfit' },
+                                bodyFont: { family: 'Outfit' },
+                                borderWidth: 1,
+                                borderColor: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                                ticks: { color: '#64748b', font: { family: 'Outfit' } }
+                            },
+                            y: {
+                                grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                                ticks: { 
+                                    color: '#64748b', 
+                                    font: { family: 'Outfit' },
+                                    callback: function(value) {
+                                        return (value / 10000).toFixed(0) + '만';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // On document load
+        window.addEventListener('DOMContentLoaded', () => {
+            if (initialPrices && initialPrices.length > 0) {
+                renderChart(initialPrices);
+            }
+            calculateArbitrage();
+        });
+    </script>
+</body>
+</html>
