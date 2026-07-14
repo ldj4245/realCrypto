@@ -32,6 +32,7 @@ public class PriceCollectService {
         for (ExchangeClientPort client : clients) {
             if (client.supports(target.getExchange())) {
                 CryptoPrice price = client.fetchPrice(target.getMarket());
+                price.setCollectTarget(target);
                 cryptoPriceSavePort.save(price);
                 return;
             }

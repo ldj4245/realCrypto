@@ -19,6 +19,19 @@ public class PriceViewController {
     public String index(Model model) {
         List<CryptoPrice> prices = priceQueryPort.findRecentPrices(null, null, 50);
         model.addAttribute("prices", prices);
+
+        CryptoPrice latestUpbit = prices.stream()
+                .filter(p -> "UPBIT".equals(p.getExchange()))
+                .findFirst()
+                .orElse(null);
+
+        CryptoPrice latestBinance = prices.stream()
+                .filter(p -> "BINANCE".equals(p.getExchange()))
+                .findFirst()
+                .orElse(null);
+
+        model.addAttribute("latestUpbit", latestUpbit);
+        model.addAttribute("latestBinance", latestBinance);
         return "index";
     }
 }
