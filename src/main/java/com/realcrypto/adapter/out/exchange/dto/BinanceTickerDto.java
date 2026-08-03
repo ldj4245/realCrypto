@@ -24,6 +24,22 @@ public class BinanceTickerDto implements ExchangeTicker {
     @JsonProperty("lastPrice")
     private Double lastPrice;
 
+    @JsonProperty("priceChangePercent")
+    private Double priceChangePercent;
+
+    @JsonProperty("quoteVolume")
+    private Double quoteVolume;
+
+    @Override
+    public Double getChangeRate() {
+        return this.priceChangePercent != null ? this.priceChangePercent : 0.0;
+    }
+
+    @Override
+    public Double getAccTradeValue() {
+        return this.quoteVolume != null ? this.quoteVolume : 0.0;
+    }
+
     // 🔌 C타입 단자(ExchangeTicker) 규칙 구현하기!
     @Override
     public String getMarket() {

@@ -25,6 +25,22 @@ public class UpbitTickerDto implements ExchangeTicker {
     @JsonProperty("trade_price")
     private Double tradePrice;
 
+    @JsonProperty("signed_change_rate")
+    private Double signedChangeRate;
+
+    @JsonProperty("acc_trade_price_24h")
+    private Double accTradePrice24h;
+
+    @Override
+    public Double getChangeRate() {
+        return this.signedChangeRate != null ? this.signedChangeRate * 100 : 0.0;
+    }
+
+    @Override
+    public Double getAccTradeValue() {
+        return this.accTradePrice24h != null ? this.accTradePrice24h : 0.0;
+    }
+
     @Override
     public String getExchangeName() {
         return "UPBIT";

@@ -7,4 +7,12 @@ public interface ExchangeTicker {
     Double getHighPrice();       // 고가
     Double getLowPrice();        // 저가
     Double getTradePrice();      // 종가 (현재가)
+    
+    default Double getChangeRate() {
+        return 0.0;
+    }
+    
+    default Double getAccTradeValue() {
+        return 0.0;
+    }
 }
