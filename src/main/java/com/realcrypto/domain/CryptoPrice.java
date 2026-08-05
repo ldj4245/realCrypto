@@ -41,6 +41,8 @@ public class CryptoPrice {
     private Double highPrice;
     private Double lowPrice;
     private Double tradePrice;
+    private Double changeRate;
+    private Double accTradeValue;
 
     @Column(nullable = false)
     private LocalDateTime timestamp; // 데이터 수집 시간
@@ -48,13 +50,15 @@ public class CryptoPrice {
     // 1. 내부 조립용 빌더
     @Builder
     private CryptoPrice(String market, String exchange, Double openingPrice,
-            Double highPrice, Double lowPrice, Double tradePrice, LocalDateTime timestamp) {
+            Double highPrice, Double lowPrice, Double tradePrice, Double changeRate, Double accTradeValue, LocalDateTime timestamp) {
         this.market = market;
         this.exchange = exchange;
         this.openingPrice = openingPrice;
         this.highPrice = highPrice;
         this.lowPrice = lowPrice;
         this.tradePrice = tradePrice;
+        this.changeRate = changeRate;
+        this.accTradeValue = accTradeValue;
         this.timestamp = timestamp;
     }
 }
