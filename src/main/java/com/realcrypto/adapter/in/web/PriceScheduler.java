@@ -1,11 +1,8 @@
 package com.realcrypto.adapter.in.web;
 
-import java.util.List;
-
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.realcrypto.domain.CollectTarget;
 import com.realcrypto.application.service.PriceCollectService;
 
 import lombok.RequiredArgsConstructor;
@@ -18,20 +15,14 @@ public class PriceScheduler {
 
     private final PriceCollectService priceCollectService;
 
-    // 10초 마다 작동
-    @Scheduled(fixedRate = 10000)
+    // 10초마다 3대 거래소 전체 시세 및 김프 일괄 수집/연산/캐싱
+    @Scheduled(fixedRate = 10000, initialDelay = 1000)
     public void collectPrices() {
-        log.info("[시세 수집 알람] 수집 활성화된 코인 리스트를 조회합니다.");
-
-        // 💡 DB 직접 조회가 아닌, UseCase의 입력 포트를 통해 대상을 가져옴!
-        List<CollectTarget> activeTargets = priceCollectService.getActiveTargets();
-
-        for (CollectTarget target : activeTargets) {
-            try {
-                priceCollectService.collect(target);
-            } catch (Exception e) {
-                log.error("[{}] {} 시세 수집 중 장애 발생 : {}", target.getExchange(), target.getMarket(), e.getMessage());
-            }
+        try {
+            log.info("[3대 거래소 시세 수집기] 업비트, 바이낸스, 빗썸 시세 일괄 수집 및 공식 실시간 환율 적용 김프 갱신 시작");
+            priceCollectService.collectAllAndCalculateArbitrage(0.0);
+        } catch (Exception e) {
+            log.error("[시세 수집 장애] {}", e.getMessage(), e);
         }
     }
 }
