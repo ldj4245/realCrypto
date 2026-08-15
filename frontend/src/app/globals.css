@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 숫자 고정폭 (시세 변동 시 흔들림 방지) */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 실시간 가격 변동 플래시 효과 */
+@keyframes flashUp {
+  0% {
+    background-color: rgba(225, 29, 72, 0.22);
+    color: #e11d48;
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes flashDown {
+  0% {
+    background-color: rgba(37, 99, 235, 0.22);
+    color: #2563eb;
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.animate-flash-up {
+  animation: flashUp 1.2s ease-out;
+}
+
+.animate-flash-down {
+  animation: flashDown 1.2s ease-out;
+}
+
+/* 커스텀 스크롤바 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
