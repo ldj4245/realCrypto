@@ -1,136 +1,118 @@
-# 🚀 RealCrypto (리얼크립토) - 대한민국 1등 암호화폐 올인원 포털
+# RealCrypto (가상자산 실시간 김프 및 시황 대시보드)
 
-> **업비트 · 빗썸 · 바이낸스 3대 거래소 실시간 김치 프리미엄**, **바이낸스 선물 8시간 펀딩비(APR)**, **공식 실시간 외환 환율**, **코인니스 스타일 24시 실시간 속보 & 온체인 고래 레이더**, **코인판 스타일 4대 커뮤니티 & 개미 심리 배틀**을 한곳에 집약한 차세대 크립토 포털입니다.
-
----
-
-## 🌟 3대 경쟁 플랫폼 벤치마킹 & 핵심 기능
-
-```mermaid
-flowchart TD
-    subgraph Portal [RealCrypto All-in-One Portal]
-        Tab1[📊 실시간 김프 전광판]
-        Tab2[📰 24시 속보 & 고래 레이더]
-        Tab3[💬 커뮤니티 라운지]
-        Widget1[🧮 원클릭 실순익 차익 계산기]
-        Widget2[🔥 얼터너티브 공포·탐욕 지수]
-        Widget3[⚡ 바이낸스 선물 펀딩비 & APR]
-        Widget4[💱 공식 실시간 외환 환율 연동]
-    end
-
-    Tab1 --> Widget3
-    Tab1 --> Widget1
-    Tab1 --> Widget4
-    Tab2 --> Widget2
-```
-
-### 1. 📊 【김프가(kimpga) 벤치마크】 실시간 김프 & 차익거래 엔진
-- **3대 거래소(업비트 · 빗썸 · 바이낸스) 480+ 전 종목 실시간 교차 분석**: 10초 주기 일괄 수집 및 Redis 캐싱
-- **바이낸스 선물 8시간 펀딩비 & 연환산(APR) 열 토글**: 롱/숏 포지션 쏠림 및 과열 상태 모니터링
-- **공식 실시간 외환 환율(USD/KRW) 자동 연동**: 글로벌 오픈 외환 API를 통한 정밀한 김프 계산
-- **원클릭 차익거래 실순익 계산기**: 매매 수수료(0.19%) + 출금 네트워크 수수료를 차감한 **진짜 내 손의 실수령 순이익 랭킹** 산출
-
-### 2. 📰 【코인니스(coiness) 벤치마크】 24시 속보 & 온체인 고래 레이더
-- **24시 실시간 크립토 1줄 속보 피드**: Google News Crypto RSS 실시간 XML 스크래핑 및 `#BTC`, `#ETH`, `#XRP` 코인 심볼 자동 태깅 & 호재/악재 감성 분석
-- **얼터너티브 공포·탐욕 지수 (Fear & Greed Index)**: 현재 시장 심리 단계 및 7일 추이 게이지 제공
-- **100억원+ 온체인 고래 대량 이동 레이더 (Whale Alert)**: Blockchain.info 온체인 트랜잭션 풀을 실시간 추적하여 거래소 유입/유출 및 업비트 시세 기준 원화 환산액 표기
-
-### 3. 💬 【코인판(coinpan) 벤치마크】 투자자 커뮤니티 & 심리 배틀
-- **자체 JWT 회원가입 / 로그인 시스템**: 안전한 사용자 인증 및 닉네임 기반 활동
-- **4대 특화 카테고리**: `자유게시판`, `익절/손절 인증소`, `김프/차익 꿀팁`, `코인 분석`
-- **`🟢 롱 / 🔴 숏 / ⚪ 중립` 포지션 뱃지 & 실시간 개미 심리 투표 바**
-- **추천/비추천 토글 및 🔥 BEST(념글) 자동 선정 시스템**
+스프링 부트(헥사고날 아키텍처)와 Next.js를 기반으로 구현한 실시간 가상자산 시세, 김치 프리미엄 비교 및 커뮤니티 서비스입니다.  
+업비트, 빗썸, 바이낸스 3개 거래소의 시세를 실시간으로 수집해 가격 차이를 계산하고, 선물 펀딩비와 시황 뉴스, 투자자 커뮤니티 기능을 제공합니다.
 
 ---
 
-## 🏛 시스템 아키텍처 (Hexagonal Architecture)
-
-도메인 비즈니스 로직을 외부 인프라(거래소 API, Redis, MySQL, Web)와 완전히 격리하는 **포트 & 어댑터(Hexagonal Architecture)** 패턴을 적용했습니다.
-
-```
-realcrypto/
-├── src/main/java/com/realcrypto/
-│   ├── domain/               # 핵심 비즈니스 도메인 모델 (CryptoPrice, User, Post, Comment)
-│   ├── application/          # 비즈니스 서비스 & 유스케이스
-│   │   ├── port/in/          # 인바운드 포트
-│   │   ├── port/out/         # 아웃바운드 포트 (ExchangeClientPort, ArbitrageCachePort 등)
-│   │   └── service/          # PriceCollectService, CryptoInsightService, AuthService, PostService
-│   ├── adapter/
-│   │   ├── in/web/           # REST 컨트롤러 (CryptoPriceController, PostController, AuthController)
-│   │   └── out/
-│   │       ├── exchange/     # Upbit, Bithumb, Binance, BinanceFutures, RealNews, RealWhale, FearGreed
-│   │       ├── cache/        # Redis 캐시 어댑터 (ArbitrageRedisAdapter)
-│   │       └── persistence/  # JPA 리포지토리 어댑터
-│   └── global/               # Security, JWT, Redis, Config
-└── frontend/                 # Next.js 16 (App Router), React 19, Tailwind CSS, Lucide
-```
-
----
-
-## 🛠 기술 스택 (Tech Stack)
+## 기술 스택
 
 ### Backend
-- **Java 17 / Spring Boot 3.4.1**
-- **Spring Data JPA / QueryDSL / MySQL 8.0**
-- **Spring Data Redis** (실시간 시세 초고속 인메모리 캐싱)
-- **Spring Security & JJWT** (무상태 자체 인증 토큰)
-- **HttpClient / RestTemplate** (실시간 거래소 & RSS 비동기 수집)
+- Java 17, Spring Boot 3.4.1
+- Spring Data JPA, QueryDSL, MySQL 8.0
+- Spring Data Redis
+- Spring Security, JWT (jjwt)
+- Gradle
 
 ### Frontend
-- **Next.js 16 (App Router) / React 19 / TypeScript**
-- **Tailwind CSS** (클린 화이트 미니멀 테마)
-- **Lucide React** (모던 아이콘 팩)
+- Next.js 16 (App Router), React 19, TypeScript
+- Tailwind CSS
 
 ---
 
-## 🚀 빠른 시작 가이드 (Getting Started)
+## 패키지 구조
 
-### 1. 사전 요구사항
-- JDK 17+
-- Node.js 18+ & npm
-- MySQL 8.0 & Redis
+외부 API나 DB 변경이 비즈니스 로직에 영향을 주지 않도록 헥사고날(Port & Adapter) 구조로 설계했습니다.
 
-### 2. 백엔드 실행
-```bash
-# 1. DB 설정 확인 (src/main/resources/application.properties)
-# 2. 백엔드 서버 기동
-./gradlew.bat bootRun
+```text
+src/main/java/com/realcrypto
+├── domain                  # 도메인 엔티티 및 모델 (CryptoPrice, User, Post, Comment 등)
+├── application
+│   ├── port
+│   │   ├── in              # UseCase 인터페이스
+│   │   └── out             # 외부 연동 및 영속성 포트 (ExchangeClientPort, ArbitrageCachePort 등)
+│   └── service             # 비즈니스 로직 (PriceCollectService, CryptoInsightService, PostService 등)
+├── adapter
+│   ├── in/web              # Controller 및 요청/응답 DTO
+│   └── out
+│       ├── exchange        # 거래소(업비트/빗썸/바이낸스), 환율, RSS 뉴스, 온체인 API 클라이언트
+│       ├── cache           # Redis 캐시 어댑터
+│       └── persistence     # JPA Repository 및 QueryDSL 구현체
+└── global                  # Security, Redis, 초기 데이터 설정
 ```
-> 백엔드 서버는 `http://localhost:8080`에서 실행됩니다.
-
-### 3. 프론트엔드 실행
-```bash
-cd frontend
-npm install
-npm run dev
-```
-> 웹 브라우저에서 `http://localhost:3000`에 접속합니다.
 
 ---
 
-## 📅 개발 일지 및 트러블슈팅 기록
+## 주요 기능
 
-### 2026-07-13 ~ 07-14: 초기 시세 수집 및 JPA 최적화
-- **타임리프 SSR 대시보드 구현**: 첫 페이지 진입 시 속도 최적화를 위해 SSR + CSR 하이브리드 구조 설계
-- **QueryDSL N+1 방지**: 시세 테이블과 대상 코인 테이블 간의 조인 쿼리 최적화
+1. **3대 거래소 실시간 시세 및 김프 비교**
+   - 업비트, 빗썸, 바이낸스 전 종목 시세를 주기적으로 일괄 수집하여 거래소 간 가격 격차(김치 프리미엄) 계산
+   - 바이낸스 선물 8시간 펀딩비 및 연환산 이율(APR) 조회
+   - 실시간 USD/KRW 환율 API 연동 및 수동 환율 시뮬레이션 지원
+   - 거래소 매매 수수료와 코인별 출금 수수료를 반영한 차익거래 순수익 계산기
 
-### 2026-08-03 ~ 08-07: 3사 일괄 수집 & Redis 분산 캐싱 & 펀딩비 연동
-- **수백 개 코인 API 호출 제한(Rate Limit) 해결**: 5초마다 개별 코인을 요청하지 않고, 거래소별 1회 일괄 티커 API(`/v1/ticker`, `/ticker/ALL_KRW`, `/ticker/24hr`)를 통해 수백 개 코인을 1회 메모리 조인으로 해결
-- **디스크 I/O 병목 제거**: 수초 단위 실시간 시세는 MySQL 쓰기 대신 Redis 인메모리 캐시(`ArbitrageCachePort`)에 TTL 30초로 캐싱하여 DB 부하 0% 달성
-- **바이낸스 선물 8시간 펀딩비율 및 연이율(APR) 계산기** 연동
+2. **실시간 뉴스 및 온체인 지표**
+   - 구글 뉴스 RSS 파싱을 통한 가상자산 관련 최신 기사 수집 및 키워드 분류
+   - Alternative.me API 연동을 통한 크립토 공포·탐욕 지수 표시
+   - Blockchain.info 트랜잭션 데이터를 활용한 비트코인 대량 이동(Whale) 내역 조회
 
-### 2026-08-09 ~ 08-13: 보안 인증, 4대 커뮤니티 & 실시간 뉴스/고래 온체인 레이더
-- **JWT 무상태 인증 구축**: 자체 회원가입, 닉네임 중복 검증, 토큰 기반 인가
-- **4대 커뮤니티 백엔드**: 익절/손절 수익률 뱃지, 롱/숏 포지션 뷰, 추천수 5개 이상 시 자동 BEST 념글 승격
-- **라이브 데이터 스크래퍼**: Google News Crypto RSS 및 Blockchain.info 온체인 트랜잭션 풀을 1분 주기로 실시간 파싱 및 감성 분석
-
-### 2026-08-15 ~ 08-16: Next.js 16 프로덕션 포털 UI 완성 & 이상치 필터링
-- **프론트엔드 풀스택 포털화**: 실시간 김프 전광판, 24시 속보/고래 레이더, 코인판 커뮤니티 라운지 구현
-- **공식 실시간 외환 환율(1,414.86원) 연동**: 하드코딩 환율 대신 글로벌 오픈 외환 API를 통한 실시간 매매기준율 연동
-- **평균 김프 이상치(Outlier) 보정**: 동음이의어 티커(DATA, PROS 등)로 인한 평균 왜곡을 절사평균(Trimmed Mean, ±20% 범위 필터) 알고리즘으로 제거하여 정상 시장 체감 김프(`-0.15%`) 산출
+3. **커뮤니티 게시판**
+   - JWT 기반 자체 회원가입 및 로그인
+   - 카테고리별 게시판 (자유, 익절/손절 인증, 김프 팁, 코인 분석)
+   - 게시글 작성 시 롱/숏 포지션 및 수익률 기록, 추천 수 기준 베스트 게시글 분류
 
 ---
 
-## 📄 라이선스
-MIT License © 2026 RealCrypto Team.
-Aggregated with Upbit, Bithumb & Binance Public APIs.
+## 📅 개발 일지 및 학습 기록
+
+### 2026-07-13
+- **타임리프 SSR 대시보드 구현**
+  - 첫 페이지 진입 시 속도 최적화를 위해 서버 사이드 렌더링(SSR) 도입
+  - 템플릿 컴포넌트화(Fragments 분리) 진행
+  - 초기 로드 시 차트 데이터를 script inline으로 JSON 직렬화하여 자바스크립트로 전달하는 하이브리드(SSR + CSR) 구조 설계
+
+### 2026-07-14
+- **JPA 연관관계 매핑 및 QueryDSL 조인 최적화**
+  - `CryptoPrice`와 `CollectTarget` 간의 단방향 `@ManyToOne` 연관관계 구축
+  - DB 성능 최적화(N+1 문제 방지)를 위해 QueryDSL에서 `.join()`을 적용하여 시세 테이블과 대상 코인 테이블을 결합 조회하도록 개선
+
+- **오늘의 고민 (성능 및 스케일아웃 설계)**
+  - **질문**: 코인니스처럼 거래소의 700개가 넘는 전체 종목 데이터를 가져오고, 그중에서 사용자가 즐겨찾기(관심 목록) 지정한 코인을 상단에 노출하고 싶다면 기존 설계를 어떻게 변경해야 할까?
+  - **문제의식**:
+    1. 수백 개의 코인 시세를 5초마다 개별 API로 요청할 경우 발생하는 거래소 API Rate Limit(호출 제한 및 IP 차단) 문제
+    2. 수백 개의 가격 데이터를 5초마다 DB에 매번 `INSERT`할 때 발생하는 디스크 쓰기(I/O) 병목 및 서버 과부하 문제
+    3. 다중 서버(Scale-out) 환경으로 확장 시, 서버 간 시세 불일치(정합성) 문제를 해결하려면 어떤 분산/메모리 아키텍처를 적용해야 하는가?
+
+### 2026-08-03
+- **거래소 일괄 조회(Bulk API) 전환 및 빗썸 추가 연동**
+  - 7월 14일에 고민했던 API Rate Limit 문제를 해결하기 위해 종목별 단건 호출 방식을 폐기하고, 각 거래소가 제공하는 전체 티커 일괄 조회 엔드포인트(`/v1/ticker`, `/public/ticker/ALL_KRW`, `/api/v3/ticker/24hr`)로 변경
+  - 1회 HTTP 요청으로 수백 개 종목을 가져온 뒤 애플리케이션 메모리 상에서 심볼(`BTC`, `ETH` 등) 기준으로 매핑하도록 `PriceCollectService` 구조 개선
+
+### 2026-08-05
+- **Redis 캐시 도입을 통한 DB 쓰기 병목 해결**
+  - 10초마다 갱신되는 전체 종목의 김프 데이터를 매번 MySQL에 `INSERT`하는 대신, Redis(`ArbitrageRedisAdapter`)에 덮어쓰기(TTL 적용) 방식으로 캐싱하도록 분리
+  - 조회 API 호출 시 DB를 거치지 않고 Redis에서 바로 반환하여 응답 속도 개선 및 디스크 I/O 부하 제거
+
+### 2026-08-07
+- **바이낸스 선물 펀딩비 및 실시간 환율 API 연동**
+  - 김프가(kimpga) 등 기존 서비스들을 참고하여 단순 현물 가격 비교 외에 바이낸스 선물 펀딩비(`premiumIndex`) 데이터를 추가로 연동
+  - 고정 환율로 계산할 때 실제 김프와 오차가 발생하는 문제를 해결하기 위해 오픈 환율 API(`open.er-api.com`, `frankfurter.dev`)를 연동하여 실시간 USD/KRW 환율을 가져오도록 수정 (호출 실패 시 이전 캐시 환율 유지)
+
+### 2026-08-09 ~ 08-11
+- **JWT 인증 및 커뮤니티 도메인 구현**
+  - 시세만 확인하고 이탈하는 문제를 보완하기 위해 코인판 형태의 커뮤니티 게시판 기능 추가
+  - Spring Security + JWT 기반 로그인/회원가입 구현
+  - 게시글(`Post`), 댓글(`Comment`), 추천(`PostVote`) 엔티티 설계 및 코인 커뮤니티 특성에 맞춰 작성자의 포지션(롱/숏)과 수익률을 함께 남길 수 있도록 필드 구성
+
+### 2026-08-13
+- **외부 시황 데이터(공포·탐욕 지수, 뉴스 RSS, 온체인 트랜잭션) 연동**
+  - 초기에는 화면 테스트를 위해 더미 데이터로 구성했으나, 실제 데이터를 보여주기 위해 구글 뉴스 RSS 파서(`RealNewsClient`)와 블록체인 미체결 트랜잭션 조회(`RealWhaleClient`) 로직으로 교체
+  - 차익거래 시 단순 김프 퍼센트만 보고 진입했다가 출금 수수료와 매매 수수료 때문에 손해를 보는 경우를 계산할 수 있도록 전송 코인별(`XRP`, `TRX`, `SOL` 등) 수수료 차감 계산 로직 추가
+
+### 2026-08-15 ~ 08-16
+- **Next.js 프론트엔드 분리 및 평균 김프 이상치(Outlier) 보정**
+  - 기존 타임리프 뷰에서 상태 관리가 복잡해짐에 따라 프론트엔드를 Next.js(App Router)로 분리하고 화이트 톤 UI로 재구성
+  - **트러블슈팅 (평균 김프 왜곡 현상)**:
+    - 전체 종목의 김프 평균을 단순 산술평균으로 구했더니 평균 김프가 `+100%` 이상으로 비정상 출력되는 문제 발생
+    - 원인을 확인해보니 거래소 간 티커 심볼만 같고 실제로는 다른 코인이거나(예: `DATA`), 토큰 액면분할/스왑 문제로 가격 차이가 수천 퍼센트 나는 이상치 종목들이 포함되어 있었음
+    - 정상적인 시장 평균을 보여주기 위해 김프가 `±20%` 범위를 벗어나는 이상치(가두리/티커 불일치) 종목은 평균 합산에서 제외하는 절사평균 방식으로 수정하여 실제 체감 김프(`-0.1% ~ +2%` 내외)가 표시되도록 해결
