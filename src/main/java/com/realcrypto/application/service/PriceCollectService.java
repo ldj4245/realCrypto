@@ -30,7 +30,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class PriceCollectService {
 
     private final List<ExchangeClientPort> clients;
@@ -40,7 +39,7 @@ public class PriceCollectService {
     private final com.realcrypto.adapter.out.exchange.BinanceFuturesClient binanceFuturesClient;
     private final com.realcrypto.adapter.out.exchange.ExchangeRateClient exchangeRateClient;
 
-    // 코인 한글명 매핑 맵
+    // 코인 한글명 매핑 맵 (업비트 API 자동 갱신 + 기본 폴백)
     private static final Map<String, String> KOREAN_NAME_MAP = new ConcurrentHashMap<>();
 
     static {
@@ -90,6 +89,7 @@ public class PriceCollectService {
         return collectTargetQueryPort.findActiveTargets();
     }
 
+    @Transactional
     public void collect(CollectTarget target) {
         for (ExchangeClientPort client : clients) {
             if (client.supports(target.getExchange())) {
@@ -105,6 +105,7 @@ public class PriceCollectService {
     /**
      * 업비트, 바이낸스, 빗썸 3대 거래소 전체 시세를 일괄 수집하고
      * 베이스 심볼 기준으로 자동 페어링하여 3자 김프를 계산 및 Redis에 캐싱합니다.
+     * 외부 API 다중 호출 시 DB 커넥션 점유를 방지하기 위해 트랜잭션 없이 실행됩니다.
      */
     public List<TripleArbitrageDto> collectAllAndCalculateArbitrage(double exchangeRate) {
         if (exchangeRate <= 0) {
@@ -114,10 +115,14 @@ public class PriceCollectService {
         Map<String, CryptoPrice> bithumbMap = new HashMap<>();
         Map<String, CryptoPrice> binanceMap = new HashMap<>();
 
-        // 1. 거래소별 전체 시세 일괄 수집
+        // 1. 거래소별 전체 시세 및 한글 종목명 일괄 수집
         for (ExchangeClientPort client : clients) {
             try {
                 List<CryptoPrice> prices = client.fetchAllPrices();
+                Map<String, String> koreanNames = client.fetchKoreanNames();
+                if (koreanNames != null && !koreanNames.isEmpty()) {
+                    KOREAN_NAME_MAP.putAll(koreanNames);
+                }
                 for (CryptoPrice p : prices) {
                     String rawSymbol = extractBaseSymbol(p.getMarket(), p.getExchange());
                     if (rawSymbol == null || rawSymbol.isEmpty()) continue;
@@ -195,6 +200,18 @@ public class PriceCollectService {
 
             String nameKr = KOREAN_NAME_MAP.getOrDefault(symbol, symbol);
 
+            // 김프 또는 거래소 간 가격 괴리가 ±50%를 초과하면 티커 동음이의어/스왑/가두리 이상치로 판별
+            boolean isNormal = true;
+            if (upbitBinancePremium != null && Math.abs(upbitBinancePremium) > 50.0) {
+                isNormal = false;
+            }
+            if (bithumbBinancePremium != null && Math.abs(bithumbBinancePremium) > 50.0) {
+                isNormal = false;
+            }
+            if (upbitBithumbGap != null && Math.abs(upbitBithumbGap) > 50.0) {
+                isNormal = false;
+            }
+
             TripleArbitrageDto dto = TripleArbitrageDto.builder()
                     .symbol(symbol)
                     .nameKr(nameKr)
@@ -214,7 +231,7 @@ public class PriceCollectService {
                     .fundingRatePercent(fundingRatePercent)
                     .fundingApr(fundingApr)
                     .nextFundingTime(nextFundingTime)
-                    .isWalletNormal(true)
+                    .isWalletNormal(isNormal)
                     .updatedAt(now)
                     .build();
 
@@ -237,12 +254,10 @@ public class PriceCollectService {
         return resultList;
     }
 
-    @Transactional(readOnly = true)
     public List<TripleArbitrageDto> getAllArbitrage() {
         return arbitrageCachePort.findAll();
     }
 
-    @Transactional(readOnly = true)
     public List<TripleArbitrageDto> getSummaryArbitrage() {
         List<TripleArbitrageDto> all = arbitrageCachePort.findAll();
         List<String> majorSymbols = List.of("BTC", "ETH", "SOL", "XRP");
@@ -256,7 +271,6 @@ public class PriceCollectService {
         return summary;
     }
 
-    @Transactional(readOnly = true)
     public double getLiveExchangeRate() {
         return exchangeRateClient.fetchLiveUsdKrwRate();
     }

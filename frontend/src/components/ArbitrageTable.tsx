@@ -91,7 +91,12 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
       let valB: number = 0;
 
       switch (sortField) {
-        case 'premium':
+        case 'premium': {
+          const normalA = a.isWalletNormal !== false;
+          const normalB = b.isWalletNormal !== false;
+          if (normalA !== normalB) {
+            return normalA ? -1 : 1;
+          }
           if (exchangeMode === 'UPBIT_BINANCE') {
             valA = a.upbitBinancePremium ?? -999;
             valB = b.upbitBinancePremium ?? -999;
@@ -103,6 +108,7 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
             valB = b.upbitBithumbGap ?? -999;
           }
           break;
+        }
         case 'price':
           if (exchangeMode === 'BITHUMB_BINANCE') {
             valA = a.bithumbPrice ?? 0;
@@ -382,7 +388,16 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
                             <span className="font-bold text-slate-900 text-xs leading-tight">
                               {item.symbol}
                             </span>
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" title="입출금 정상" />
+                            {item.isWalletNormal === false ? (
+                              <span
+                                className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 leading-none"
+                                title="거래소 간 심볼 불일치 또는 입출금 중단으로 인한 시세 괴리"
+                              >
+                                시세괴리
+                              </span>
+                            ) : (
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" title="시세 정상" />
+                            )}
                           </div>
                           <span className="text-[11px] text-slate-400 font-medium block leading-tight">
                             {item.nameKr}

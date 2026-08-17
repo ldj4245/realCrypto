@@ -99,12 +99,12 @@ public class CryptoInsightService {
         List<TripleArbitrageDto> allPrices = arbitrageCachePort.findAll();
         List<CryptoNewsDto.RouteRecommendation> routes = new ArrayList<>();
 
-        addRouteOption(routes, allPrices, "XRP", "리플", 850.0, 2, investmentKrw, "🚀 가장 빠르고 저렴");
-        addRouteOption(routes, allPrices, "TRX", "트론", 2000.0, 1, investmentKrw, "⚡ 초고속 전송");
-        addRouteOption(routes, allPrices, "SOL", "솔라나", 2400.0, 3, investmentKrw, "⭐ 인기 전송 코인");
-        addRouteOption(routes, allPrices, "DOGE", "도지코인", 1000.0, 5, investmentKrw, "🐕 알트 전송");
-        addRouteOption(routes, allPrices, "BTC", "비트코인", 44000.0, 20, investmentKrw, "👑 대규모 자금용");
-        addRouteOption(routes, allPrices, "ETH", "이더리움", 8000.0, 10, investmentKrw, "💎 메이저");
+        addRouteOption(routes, allPrices, "XRP", "리플", 850.0, 2, investmentKrw, "빠른 전송 · 저수수료");
+        addRouteOption(routes, allPrices, "TRX", "트론", 2000.0, 1, investmentKrw, "고속 전송 네트워크");
+        addRouteOption(routes, allPrices, "SOL", "솔라나", 2400.0, 3, investmentKrw, "주요 전송 네트워크");
+        addRouteOption(routes, allPrices, "DOGE", "도지코인", 1000.0, 5, investmentKrw, "알트코인 전송");
+        addRouteOption(routes, allPrices, "BTC", "비트코인", 44000.0, 20, investmentKrw, "고액 전송 적합");
+        addRouteOption(routes, allPrices, "ETH", "이더리움", 8000.0, 10, investmentKrw, "메이저 네트워크");
 
         // 순수익률 높은 순으로 정렬
         routes.sort((a, b) -> Double.compare(b.getNetProfitRate(), a.getNetProfitRate()));
@@ -148,7 +148,7 @@ public class CryptoInsightService {
 
         String tag = defaultTag;
         if (netRate > 2.0 && minutes <= 3) {
-            tag = "🔥 실시간 최적 추천 (BEST)";
+            tag = "실시간 최적 루트";
         }
 
         list.add(CryptoNewsDto.RouteRecommendation.builder()
