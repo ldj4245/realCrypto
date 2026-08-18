@@ -13,8 +13,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 export default function DashboardPage() {
   const [items, setItems] = useState<TripleArbitrage[]>([]);
-  const [exchangeRate, setExchangeRate] = useState<number>(1380);
-  const [countdown, setCountdown] = useState<number>(5);
+  const [exchangeRate, setExchangeRate] = useState<number>(1415);
+  const [isStreamConnected, setIsStreamConnected] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCoin, setSelectedCoin] = useState<TripleArbitrage | null>(null);
@@ -22,8 +22,40 @@ export default function DashboardPage() {
   // 가격 변동 감지용 맵 (symbol -> 'up' | 'down')
   const [priceFlashMap, setPriceFlashMap] = useState<Record<string, 'up' | 'down' | undefined>>({});
   const prevPriceRef = useRef<Record<string, number>>({});
+  const customRateModifiedRef = useRef<boolean>(false);
 
-  // 데이터 가져오기
+  const applyIncomingItems = useCallback((data: TripleArbitrage[]) => {
+    if (!Array.isArray(data)) return;
+
+    const newFlashMap: Record<string, 'up' | 'down' | undefined> = {};
+    const newPriceRef: Record<string, number> = {};
+
+    data.forEach((coin) => {
+      const currentPrice = coin.upbitPrice || coin.bithumbPrice || 0;
+      const prevPrice = prevPriceRef.current[coin.symbol];
+
+      if (prevPrice !== undefined && currentPrice > 0 && prevPrice > 0) {
+        if (currentPrice > prevPrice) {
+          newFlashMap[coin.symbol] = 'up';
+        } else if (currentPrice < prevPrice) {
+          newFlashMap[coin.symbol] = 'down';
+        }
+      }
+      newPriceRef[coin.symbol] = currentPrice;
+    });
+
+    prevPriceRef.current = newPriceRef;
+    setItems(data);
+
+    if (Object.keys(newFlashMap).length > 0) {
+      setPriceFlashMap(newFlashMap);
+      setTimeout(() => {
+        setPriceFlashMap({});
+      }, 1200);
+    }
+  }, []);
+
+  // 수동 새로고침 및 폴백 조회
   const fetchData = useCallback(async (isManual = false) => {
     try {
       setIsLoading(true);
@@ -38,80 +70,87 @@ export default function DashboardPage() {
       }
 
       const data: TripleArbitrage[] = await res.json();
-      if (!Array.isArray(data)) {
-        throw new Error('데이터 형식이 올바르지 않습니다.');
-      }
-
-      // 가격 변동 플래시 계산
-      const newFlashMap: Record<string, 'up' | 'down' | undefined> = {};
-      const newPriceRef: Record<string, number> = {};
-
-      data.forEach((coin) => {
-        const currentPrice = coin.upbitPrice || coin.bithumbPrice || 0;
-        const prevPrice = prevPriceRef.current[coin.symbol];
-
-        if (prevPrice !== undefined && currentPrice > 0 && prevPrice > 0) {
-          if (currentPrice > prevPrice) {
-            newFlashMap[coin.symbol] = 'up';
-          } else if (currentPrice < prevPrice) {
-            newFlashMap[coin.symbol] = 'down';
-          }
-        }
-        newPriceRef[coin.symbol] = currentPrice;
-      });
-
-      prevPriceRef.current = newPriceRef;
-      setItems(data);
-
-      if (Object.keys(newFlashMap).length > 0) {
-        setPriceFlashMap(newFlashMap);
-        // 1.2초 후 플래시 초기화
-        setTimeout(() => {
-          setPriceFlashMap({});
-        }, 1200);
-      }
+      applyIncomingItems(data);
     } catch (err: any) {
       console.error('시세 조회 실패:', err);
       setError(err.message || '데이터를 가져오는데 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
-  }, [exchangeRate]);
+  }, [exchangeRate, applyIncomingItems]);
 
-  // 초기 1회 로드 및 공식 실시간 환율 수집
+  // SSE 실시간 스트리밍 연결
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/arbitrage/exchange-rate`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && data.rate) {
-          setExchangeRate(Math.round(data.rate));
+    fetchData(false);
+
+    const eventSource = new EventSource(`${API_BASE_URL}/api/arbitrage/stream`);
+
+    const handleStreamPayload = (event: MessageEvent) => {
+      try {
+        const parsed = JSON.parse(event.data);
+        if (parsed && Array.isArray(parsed.items)) {
+          applyIncomingItems(parsed.items);
+          setError(null);
+          setIsStreamConnected(true);
         }
-      })
-      .catch(() => {});
-
-    fetchData();
-  }, [fetchData]);
-
-  // 5초 주기 타이머 루프
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          fetchData();
-          return 5;
+        if (parsed && parsed.exchangeRate && !customRateModifiedRef.current) {
+          setExchangeRate(Math.round(parsed.exchangeRate));
         }
-        return prev - 1;
-      });
-    }, 1000);
+      } catch (e) {
+        console.error('SSE 데이터 파싱 오류:', e);
+      }
+    };
 
-    return () => clearInterval(timer);
-  }, [fetchData]);
+    eventSource.onopen = () => {
+      setIsStreamConnected(true);
+      setError(null);
+    };
+
+    eventSource.addEventListener('init', handleStreamPayload);
+    eventSource.addEventListener('price-update', handleStreamPayload);
+
+    eventSource.onerror = () => {
+      setIsStreamConnected(false);
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [applyIncomingItems]);
+
+  const handleExchangeRateChange = useCallback((newRate: number) => {
+    customRateModifiedRef.current = true;
+    setExchangeRate(newRate);
+  }, []);
+
+  // 사용자 설정 환율에 따른 실시간 김프 재계산
+  const displayItems = React.useMemo(() => {
+    if (!exchangeRate || exchangeRate <= 0) return items;
+    return items.map((coin) => {
+      if (!coin.binancePriceUsd || coin.binancePriceUsd <= 0) return coin;
+      const binancePriceKrw = coin.binancePriceUsd * exchangeRate;
+      const upbitBinancePremium =
+        coin.upbitPrice && coin.upbitPrice > 0
+          ? Math.round((coin.upbitPrice / binancePriceKrw - 1) * 10000) / 100
+          : null;
+      const bithumbBinancePremium =
+        coin.bithumbPrice && coin.bithumbPrice > 0
+          ? Math.round((coin.bithumbPrice / binancePriceKrw - 1) * 10000) / 100
+          : null;
+      return {
+        ...coin,
+        binancePriceKrw,
+        upbitBinancePremium,
+        bithumbBinancePremium,
+      };
+    });
+  }, [items, exchangeRate]);
 
   // 시장 체감 평균 김프 계산 (비정상 가두리/단위 불일치 이상치 제외 및 거래대금 기준 정밀 산출)
   const averagePremium = React.useMemo(() => {
-    // 1. 정상 범위 (-20% ~ +20%) 내의 코인만 필터링 (DATA, PROS 등 티커 불일치 이상치 제거)
-    const normalItems = items.filter(
+    const normalItems = displayItems.filter(
       (i) =>
+        i.isWalletNormal !== false &&
         i.upbitBinancePremium !== null &&
         i.upbitBinancePremium !== undefined &&
         i.upbitBinancePremium >= -20 &&
@@ -119,15 +158,13 @@ export default function DashboardPage() {
     );
 
     if (normalItems.length === 0) {
-      // 메이저 비트코인 기준 폴백
-      const btc = items.find((i) => i.symbol === 'BTC');
+      const btc = displayItems.find((i) => i.symbol === 'BTC');
       return btc?.upbitBinancePremium ?? 0;
     }
 
-    // 2. 거래대금 상위 및 메이저 코인 가중 또는 절사평균 계산
     const sum = normalItems.reduce((acc, curr) => acc + (curr.upbitBinancePremium || 0), 0);
     return sum / normalItems.length;
-  }, [items]);
+  }, [displayItems]);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col font-sans antialiased selection:bg-blue-100 selection:text-blue-900">
@@ -135,8 +172,8 @@ export default function DashboardPage() {
       {/* Header / Navbar */}
       <Navbar
         exchangeRate={exchangeRate}
-        setExchangeRate={setExchangeRate}
-        countdown={countdown}
+        setExchangeRate={handleExchangeRateChange}
+        isStreamConnected={isStreamConnected}
         onRefresh={() => fetchData(true)}
         isLoading={isLoading}
         averagePremium={averagePremium}
@@ -166,7 +203,7 @@ export default function DashboardPage() {
 
         {/* Major Coins Summary Cards */}
         <MajorCards
-          items={items}
+          items={displayItems}
           onSelectCoin={setSelectedCoin}
           priceFlashMap={priceFlashMap}
         />
@@ -181,7 +218,7 @@ export default function DashboardPage() {
           </div>
 
           <ArbitrageTable
-            items={items}
+            items={displayItems}
             exchangeRate={exchangeRate}
             onSelectCoin={setSelectedCoin}
             priceFlashMap={priceFlashMap}

@@ -21,17 +21,34 @@ public class CryptoPriceController {
 
     private final CryptoPriceQueryPort priceQueryPort;
     private final PriceCollectService priceCollectService;
+    private final ArbitrageSseBroadcaster sseBroadcaster;
+
+    /**
+     * 3대 거래소 실시간 시세 SSE(Server-Sent Events) 스트리밍 구독
+     */
+    @GetMapping(value = "/api/arbitrage/stream", produces = org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE)
+    public org.springframework.web.servlet.mvc.method.annotation.SseEmitter streamArbitrage() {
+        List<TripleArbitrageDto> cached = priceCollectService.getAllArbitrage();
+        double liveRate = priceCollectService.getLiveExchangeRate();
+        if (cached == null || cached.isEmpty()) {
+            cached = priceCollectService.collectAllAndCalculateArbitrage(liveRate);
+        }
+        return sseBroadcaster.subscribe(cached, liveRate);
+    }
 
     /**
      * 3대 거래소(업비트, 빗썸, 바이낸스) 전체 종목 실시간 김프 목록 조회
      */
     @GetMapping("/api/arbitrage/all")
     public List<TripleArbitrageDto> getAllArbitrage(
-            @RequestParam(defaultValue = "1380.0") double rate,
+            @RequestParam(defaultValue = "0.0") double rate,
             @RequestParam(defaultValue = "false") boolean refresh) {
         
         if (refresh) {
-            return priceCollectService.collectAllAndCalculateArbitrage(rate);
+            List<TripleArbitrageDto> updated = priceCollectService.collectAllAndCalculateArbitrage(rate);
+            double effectiveRate = rate > 0 ? rate : priceCollectService.getLiveExchangeRate();
+            sseBroadcaster.broadcast(updated, effectiveRate);
+            return updated;
         }
         
         List<TripleArbitrageDto> cached = priceCollectService.getAllArbitrage();
