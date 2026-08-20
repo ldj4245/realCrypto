@@ -7,11 +7,13 @@ import { LiveMarquee } from '@/components/LiveMarquee';
 import { MajorCards } from '@/components/MajorCards';
 import { ArbitrageTable } from '@/components/ArbitrageTable';
 import { CoinDetailModal } from '@/components/CoinDetailModal';
+import { usePreference } from '@/context/PreferenceContext';
 import { ShieldCheck, Info, AlertTriangle } from 'lucide-react';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 export default function DashboardPage() {
+  const { evaluateAlerts } = usePreference();
   const [items, setItems] = useState<TripleArbitrage[]>([]);
   const [exchangeRate, setExchangeRate] = useState<number>(1415);
   const [isStreamConnected, setIsStreamConnected] = useState<boolean>(false);
@@ -145,6 +147,12 @@ export default function DashboardPage() {
       };
     });
   }, [items, exchangeRate]);
+
+  useEffect(() => {
+    if (displayItems.length > 0) {
+      evaluateAlerts(displayItems);
+    }
+  }, [displayItems, evaluateAlerts]);
 
   // 시장 체감 평균 김프 계산 (비정상 가두리/단위 불일치 이상치 제외 및 거래대금 기준 정밀 산출)
   const averagePremium = React.useMemo(() => {

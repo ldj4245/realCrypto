@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { PreferenceProvider } from "@/context/PreferenceContext";
 import { AuthModal } from "@/components/auth/AuthModal";
 
 export const metadata: Metadata = {
@@ -17,8 +18,10 @@ export default function RootLayout({
     <html lang="ko" className="h-full">
       <body className="min-h-full flex flex-col bg-[#f8fafc]">
         <AuthProvider>
-          {children}
-          <AuthModal />
+          <PreferenceProvider>
+            {children}
+            <AuthModal />
+          </PreferenceProvider>
         </AuthProvider>
       </body>
     </html>

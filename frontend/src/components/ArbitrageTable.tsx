@@ -14,7 +14,9 @@ import {
   Percent,
   CheckCircle2,
   AlertTriangle,
+  Star,
 } from 'lucide-react';
+import { usePreference } from '@/context/PreferenceContext';
 
 interface ArbitrageTableProps {
   items: TripleArbitrage[];
@@ -29,11 +31,13 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
   onSelectCoin,
   priceFlashMap,
 }) => {
+  const { favorites, isFavorite, toggleFavorite } = usePreference();
   const [exchangeMode, setExchangeMode] = useState<ExchangeMode>('UPBIT_BINANCE');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<SortField>('volume');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [showFundingRate, setShowFundingRate] = useState(false);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
   // 거래대금 억원 단위 포맷팅
   const formatTradeValueKRW = (val: number | null | undefined) => {
@@ -78,6 +82,9 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
   // 필터링 및 정렬 처리
   const filteredAndSortedItems = useMemo(() => {
     let result = items.filter((item) => {
+      if (showFavoritesOnly && !favorites.includes(item.symbol.toUpperCase())) {
+        return false;
+      }
       const q = searchQuery.trim().toLowerCase();
       if (!q) return true;
       return (
@@ -87,6 +94,12 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
     });
 
     result.sort((a, b) => {
+      const favA = favorites.includes(a.symbol.toUpperCase());
+      const favB = favorites.includes(b.symbol.toUpperCase());
+      if (favA !== favB) {
+        return favA ? -1 : 1;
+      }
+
       let valA: number = 0;
       let valB: number = 0;
 
@@ -141,7 +154,7 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
     });
 
     return result;
-  }, [items, searchQuery, sortField, sortOrder, exchangeMode]);
+  }, [items, searchQuery, sortField, sortOrder, exchangeMode, showFavoritesOnly, favorites]);
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
@@ -183,6 +196,19 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
               업비트 vs 빗썸 (국내)
             </button>
           </div>
+
+          {/* Favorites Filter Toggle */}
+          <button
+            onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-extrabold transition border whitespace-nowrap ${
+              showFavoritesOnly
+                ? 'bg-amber-50 text-amber-800 border-amber-200 shadow-2xs'
+                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            <Star className={`h-3.5 w-3.5 ${showFavoritesOnly ? 'fill-amber-400 text-amber-500' : 'text-slate-400'}`} />
+            <span>관심종목 ({favorites.length})</span>
+          </button>
 
           {/* Funding Rate Toggle Switch */}
           <button
@@ -364,6 +390,7 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
                 const isPremiumPositive = (premium ?? 0) >= 0;
                 const isChangePositive = (primaryChange ?? 0) >= 0;
                 const totalVolume = (item.upbitTradeValue ?? 0) + (item.bithumbTradeValue ?? 0);
+                const favorited = isFavorite(item.symbol);
 
                 return (
                   <tr
@@ -380,6 +407,21 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
                     {/* Symbol / Korean Name */}
                     <td className="py-3 px-4 sm:px-6">
                       <div className="flex items-center gap-2.5">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavorite(item.symbol);
+                          }}
+                          className="p-1 -ml-1 rounded-md hover:bg-slate-100 transition text-slate-300 hover:text-amber-500"
+                          title={favorited ? '관심종목 해제' : '관심종목 등록'}
+                        >
+                          <Star
+                            className={`h-3.5 w-3.5 ${
+                              favorited ? 'fill-amber-400 text-amber-500' : 'text-slate-300'
+                            }`}
+                          />
+                        </button>
                         <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 font-extrabold flex items-center justify-center text-[10px]">
                           {item.symbol.slice(0, 3)}
                         </div>
