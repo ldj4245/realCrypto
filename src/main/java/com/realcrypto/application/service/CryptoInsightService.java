@@ -73,10 +73,27 @@ public class CryptoInsightService {
     }
 
     public List<CryptoNewsDto.FastNewsItem> getFastNews() {
+        return getFastNews(null);
+    }
+
+    public List<CryptoNewsDto.FastNewsItem> getFastNews(String symbol) {
         if (newsFeed.isEmpty()) {
             refreshLiveInsights();
         }
-        return new ArrayList<>(newsFeed);
+        if (symbol == null || symbol.trim().isEmpty()) {
+            return new ArrayList<>(newsFeed);
+        }
+        String target = symbol.trim().toUpperCase();
+        List<CryptoNewsDto.FastNewsItem> filtered = new ArrayList<>();
+        for (CryptoNewsDto.FastNewsItem item : newsFeed) {
+            boolean matchSymbol = item.getTargetSymbol() != null && item.getTargetSymbol().equalsIgnoreCase(target);
+            boolean matchTitle = item.getTitle() != null && item.getTitle().toUpperCase().contains(target);
+            boolean matchSummary = item.getSummary() != null && item.getSummary().toUpperCase().contains(target);
+            if (matchSymbol || matchTitle || matchSummary) {
+                filtered.add(item);
+            }
+        }
+        return filtered;
     }
 
     public List<CryptoNewsDto.WhaleAlertItem> getWhaleAlerts() {

@@ -24,14 +24,18 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     Page<Post> findByCategoryAndPositionOrderByCreatedAtDesc(CategoryType category, PositionType position, Pageable pageable);
 
+    Page<Post> findByTargetSymbolIgnoreCaseOrderByCreatedAtDesc(String targetSymbol, Pageable pageable);
+
     @Query("SELECT p FROM Post p WHERE " +
            "(:category IS NULL OR p.category = :category) AND " +
            "(:position IS NULL OR p.position = :position) AND " +
+           "(:symbol IS NULL OR UPPER(p.targetSymbol) = UPPER(:symbol)) AND " +
            "(:query IS NULL OR p.title LIKE %:query% OR p.content LIKE %:query% OR p.authorNickname LIKE %:query% OR p.targetSymbol LIKE %:query%) " +
            "ORDER BY p.createdAt DESC")
     Page<Post> searchPosts(
             @Param("category") CategoryType category,
             @Param("position") PositionType position,
+            @Param("symbol") String symbol,
             @Param("query") String query,
             Pageable pageable);
 }
