@@ -8,7 +8,6 @@ import { CategoryType, PositionType } from '@/types/community';
 import {
   PenSquare,
   ArrowLeft,
-  Sparkles,
   AlertCircle,
   Tag,
   Percent,
@@ -20,6 +19,7 @@ export default function WritePostPage() {
   const router = useRouter();
   const { isLoggedIn, token, openAuthModal } = useAuth();
 
+  const [editId, setEditId] = useState<string | null>(null);
   const [category, setCategory] = useState<CategoryType>('FREE');
   const [position, setPosition] = useState<PositionType>('NEUTRAL');
   const [targetSymbol, setTargetSymbol] = useState<string>('');
@@ -34,6 +34,36 @@ export default function WritePostPage() {
       openAuthModal('login');
     }
   }, [isLoggedIn, openAuthModal]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const sym = params.get('symbol');
+    if (sym) {
+      setTargetSymbol(sym.toUpperCase());
+    }
+    const editParam = params.get('edit');
+    if (editParam) {
+      setEditId(editParam);
+      fetch(`${API_BASE_URL}/api/posts/${editParam}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data) {
+            setCategory(data.category || 'FREE');
+            setPosition(data.position || 'NEUTRAL');
+            setTargetSymbol(data.targetSymbol || '');
+            setProfitRate(
+              data.profitRate !== null && data.profitRate !== undefined
+                ? String(data.profitRate)
+                : ''
+            );
+            setTitle(data.title || '');
+            setContent(data.content || '');
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,8 +94,11 @@ export default function WritePostPage() {
         profitRate: profitRate ? parseFloat(profitRate) : null,
       };
 
-      const res = await fetch(`${API_BASE_URL}/api/posts`, {
-        method: 'POST',
+      const url = editId ? `${API_BASE_URL}/api/posts/${editId}` : `${API_BASE_URL}/api/posts`;
+      const method = editId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -75,13 +108,13 @@ export default function WritePostPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.message || '게시글 작성에 실패했습니다.');
+        throw new Error(data.message || '게시글 저장에 실패했습니다.');
       }
 
       const postId = await res.json();
       router.push(`/community/${postId}`);
     } catch (err: any) {
-      setError(err.message || '게시글 작성 중 오류가 발생했습니다.');
+      setError(err.message || '게시글 저장 중 오류가 발생했습니다.');
       setIsSubmitting(false);
     }
   };
@@ -94,23 +127,27 @@ export default function WritePostPage() {
         
         {/* Top Back Link */}
         <button
-          onClick={() => router.push('/community')}
+          onClick={() => router.push(editId ? `/community/${editId}` : '/community')}
           className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition mb-6"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>커뮤니티 목록으로 돌아가기</span>
+          <span>{editId ? '게시글로 돌아가기' : '커뮤니티 목록으로 돌아가기'}</span>
         </button>
 
         {/* Write Card Container */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs">
           
           <div className="flex items-center gap-2.5 pb-6 border-b border-slate-100 mb-6">
-            <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200/60">
+            <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-800 flex items-center justify-center border border-slate-200/80">
               <PenSquare className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-xl font-black text-slate-900">새 게시글 작성</h1>
-              <p className="text-xs text-slate-400 font-medium">코인 인사이트, 차트 분석, 익절 인증을 공유하세요</p>
+              <h1 className="text-xl font-black text-slate-900">
+                {editId ? '게시글 수정' : '새 게시글 작성'}
+              </h1>
+              <p className="text-xs text-slate-400 font-medium">
+                시장 관점, 차트 분석, 매매 복기를 자유롭게 공유하세요
+              </p>
             </div>
           </div>
 
@@ -130,7 +167,7 @@ export default function WritePostPage() {
                 {[
                   { key: 'FREE', label: '자유게시판' },
                   { key: 'PROFIT_LOSS', label: '익절/손절 인증' },
-                  { key: 'ARBITRAGE_INFO', label: '김프/차익 꿀팁' },
+                  { key: 'ARBITRAGE_INFO', label: '김프/차익 노하우' },
                   { key: 'ANALYSIS', label: '코인 분석/전망' },
                 ].map((item) => (
                   <button
@@ -139,7 +176,7 @@ export default function WritePostPage() {
                     onClick={() => setCategory(item.key as CategoryType)}
                     className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition ${
                       category === item.key
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                        ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
                         : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
@@ -154,7 +191,7 @@ export default function WritePostPage() {
               
               {/* Position */}
               <div>
-                <label className="block text-xs font-black text-slate-700 mb-2">포지션 뷰</label>
+                <label className="block text-xs font-black text-slate-700 mb-2">포지션 관점</label>
                 <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200">
                   <button
                     type="button"
@@ -163,7 +200,7 @@ export default function WritePostPage() {
                       position === 'LONG' ? 'bg-rose-50 text-rose-600 border border-rose-200 shadow-2xs' : 'text-slate-500'
                     }`}
                   >
-                    롱 🟢
+                    롱 관점
                   </button>
                   <button
                     type="button"
@@ -172,7 +209,7 @@ export default function WritePostPage() {
                       position === 'NEUTRAL' ? 'bg-white text-slate-800 border border-slate-200 shadow-2xs' : 'text-slate-500'
                     }`}
                   >
-                    중립 ⚪
+                    중립
                   </button>
                   <button
                     type="button"
@@ -181,7 +218,7 @@ export default function WritePostPage() {
                       position === 'SHORT' ? 'bg-blue-50 text-blue-600 border border-blue-200 shadow-2xs' : 'text-slate-500'
                     }`}
                   >
-                    숏 🔴
+                    숏 관점
                   </button>
                 </div>
               </div>
@@ -215,7 +252,7 @@ export default function WritePostPage() {
                     step="0.1"
                     value={profitRate}
                     onChange={(e) => setProfitRate(e.target.value)}
-                    placeholder="예: +45.2 또는 -10.5"
+                    placeholder="예: 45.2 또는 -10.5"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 tabular-nums"
                   />
                 </div>
@@ -244,7 +281,7 @@ export default function WritePostPage() {
                 rows={10}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="코인 시황, 차익거래 팁, 매매 경험담 등을 자유롭게 작성해주세요."
+                placeholder="코인 시황, 차익거래 노하우, 매매 경험담 등을 자유롭게 작성해주세요."
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition leading-relaxed resize-y"
               />
             </div>
@@ -253,7 +290,7 @@ export default function WritePostPage() {
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
               <button
                 type="button"
-                onClick={() => router.push('/community')}
+                onClick={() => router.push(editId ? `/community/${editId}` : '/community')}
                 className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 transition"
               >
                 취소
@@ -261,9 +298,9 @@ export default function WritePostPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs transition shadow-sm shadow-blue-500/20 disabled:opacity-50"
+                className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs transition disabled:opacity-50"
               >
-                {isSubmitting ? '등록 중...' : '게시글 등록'}
+                {isSubmitting ? '저장 중...' : editId ? '수정 완료' : '게시글 등록'}
               </button>
             </div>
 

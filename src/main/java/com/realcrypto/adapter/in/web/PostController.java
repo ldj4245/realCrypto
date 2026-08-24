@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,13 +41,31 @@ public class PostController {
             @RequestParam(required = false) CategoryType category,
             @RequestParam(required = false) PositionType position,
             @RequestParam(required = false) String symbol,
+            @RequestParam(required = false) String author,
             @RequestParam(required = false) String query,
             @RequestParam(defaultValue = "false") boolean onlyBest,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        Page<CommunityDto.PostListItem> posts = postService.getPosts(category, position, symbol, query, onlyBest, page, size);
+        Page<CommunityDto.PostListItem> posts = postService.getPosts(
+                category, position, symbol, author, query, onlyBest, page, size);
         return ResponseEntity.ok(posts);
+    }
+
+    @GetMapping("/sentiment")
+    public ResponseEntity<CommunityDto.SentimentVoteResponse> getDailySentiment(
+            @RequestParam(required = false) String clientKey,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        String voterKey = resolveVoterKey(authHeader, clientKey);
+        return ResponseEntity.ok(postService.getDailySentiment(voterKey));
+    }
+
+    @PostMapping("/sentiment")
+    public ResponseEntity<CommunityDto.SentimentVoteResponse> voteDailySentiment(
+            @Valid @RequestBody CommunityDto.SentimentVoteRequest request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        String voterKey = resolveVoterKey(authHeader, request.getClientKey());
+        return ResponseEntity.ok(postService.voteDailySentiment(voterKey, request.getPosition()));
     }
 
     @GetMapping("/{id}")
@@ -79,6 +98,19 @@ public class PostController {
         return ResponseEntity.ok(postId);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<Long> updatePost(
+            @PathVariable Long id,
+            @Valid @RequestBody CommunityDto.CreatePostRequest request,
+            @RequestHeader("Authorization") String authHeader) {
+
+        String token = extractToken(authHeader);
+        String username = jwtTokenProvider.getUsernameFromToken(token);
+
+        Long updatedId = postService.updatePost(id, request, username);
+        return ResponseEntity.ok(updatedId);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePost(
             @PathVariable Long id,
@@ -102,6 +134,19 @@ public class PostController {
 
         CommunityDto.VoteResponse response = postService.votePost(id, request.getIsLike(), username);
         return ResponseEntity.ok(response);
+    }
+
+    private String resolveVoterKey(String authHeader, String clientKey) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            if (jwtTokenProvider.validateToken(token)) {
+                return "USER:" + jwtTokenProvider.getUsernameFromToken(token);
+            }
+        }
+        if (clientKey != null && !clientKey.isBlank()) {
+            return "ANON:" + clientKey.trim();
+        }
+        return null;
     }
 
     private String extractToken(String authHeader) {

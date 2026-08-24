@@ -47,6 +47,7 @@ public class CommunityDto {
         private String targetSymbol;
         private String title;
         private Double profitRate;
+        private String authorUsername;
         private String authorNickname;
         private int viewCount;
         private int likeCount;
@@ -117,5 +118,26 @@ public class CommunityDto {
         private int dislikeCount;
         private Boolean myVote;
         private boolean isBest;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SentimentVoteRequest {
+        @NotNull
+        private PositionType position; // LONG or SHORT
+        private String clientKey;
+    }
+
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SentimentVoteResponse {
+        private long longCount;
+        private long shortCount;
+        private int longPercent;
+        private int shortPercent;
+        private PositionType myPosition;
     }
 }
