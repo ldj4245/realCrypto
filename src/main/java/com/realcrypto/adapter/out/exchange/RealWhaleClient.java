@@ -27,73 +27,109 @@ public class RealWhaleClient {
         this.restTemplate = builder.build();
     }
 
+    @SuppressWarnings("unchecked")
     public List<CryptoNewsDto.WhaleAlertItem> fetchLiveWhaleTransactions(double btcPriceKrw) {
-        List<CryptoNewsDto.WhaleAlertItem> list = new ArrayList<>();
+        List<CryptoNewsDto.WhaleAlertItem> candidates = new ArrayList<>();
         try {
             Map<String, Object> body = restTemplate.getForObject(BLOCKCHAIN_TX_URL, Map.class);
             if (body != null && body.containsKey("txs")) {
                 List<Map<String, Object>> txs = (List<Map<String, Object>>) body.get("txs");
                 for (Map<String, Object> tx : txs) {
                     List<Map<String, Object>> outs = (List<Map<String, Object>>) tx.get("out");
-                    if (outs == null) continue;
+                    List<Map<String, Object>> inputs = (List<Map<String, Object>>) tx.get("inputs");
+                    if (outs == null || outs.isEmpty()) continue;
 
                     double totalSatoshi = 0.0;
+                    double maxOutSatoshi = -1.0;
+                    String primaryToAddr = null;
+
                     for (Map<String, Object> out : outs) {
                         Number val = (Number) out.get("value");
+                        String addr = (String) out.get("addr");
                         if (val != null) {
-                            totalSatoshi += val.doubleValue();
+                            double v = val.doubleValue();
+                            totalSatoshi += v;
+                            if (v > maxOutSatoshi && addr != null && !addr.isBlank()) {
+                                maxOutSatoshi = v;
+                                primaryToAddr = addr;
+                            }
                         }
                     }
 
                     double btcAmount = totalSatoshi / 100_000_000.0;
-                    // 5 BTC (약 4.5억원) 이상 트랜잭션 감지
-                    if (btcAmount >= 5.0) {
-                        String hash = (String) tx.get("hash");
-                        String shortHash = (hash != null && hash.length() > 14)
-                                ? hash.substring(0, 8) + "..." + hash.substring(hash.length() - 6)
-                                : "tx-" + UUID.randomUUID().toString().substring(0, 8);
+                    if (btcAmount < 0.05) continue;
 
-                        Number timeNum = (Number) tx.get("time");
-                        long epochSec = timeNum != null ? timeNum.longValue() : System.currentTimeMillis() / 1000;
-                        LocalDateTime txTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(epochSec), ZoneId.systemDefault());
-
-                        double valueKrw = btcAmount * (btcPriceKrw > 0 ? btcPriceKrw : 89_000_000.0);
-                        String transferType = btcAmount >= 50.0 ? "INFLOW" : "TRANSFER";
-
-                        list.add(CryptoNewsDto.WhaleAlertItem.builder()
-                                .id(hash != null ? hash : UUID.randomUUID().toString())
-                                .symbol("BTC")
-                                .amount(Math.round(btcAmount * 100.0) / 100.0)
-                                .valueKrw((double) Math.round(valueKrw))
-                                .fromAddress("익명 온체인 지갑 (" + shortHash.substring(0, 6) + ")")
-                                .toAddress(transferType.equals("INFLOW") ? "글로벌 거래소 수탁 지갑" : "콜드월렛 (" + shortHash.substring(shortHash.length() - 6) + ")")
-                                .transferType(transferType)
-                                .timestamp(txTime)
-                                .build());
-
-                        if (list.size() >= 10) break;
+                    String primaryFromAddr = null;
+                    double maxInSatoshi = -1.0;
+                    int inputCount = inputs != null ? inputs.size() : 1;
+                    if (inputs != null) {
+                        for (Map<String, Object> in : inputs) {
+                            Map<String, Object> prevOut = (Map<String, Object>) in.get("prev_out");
+                            if (prevOut != null) {
+                                String addr = (String) prevOut.get("addr");
+                                Number val = (Number) prevOut.get("value");
+                                double v = val != null ? val.doubleValue() : 0.0;
+                                if (addr != null && !addr.isBlank() && v > maxInSatoshi) {
+                                    maxInSatoshi = v;
+                                    primaryFromAddr = addr;
+                                }
+                            }
+                        }
                     }
+
+                    String hash = (String) tx.get("hash");
+                    if (hash == null || hash.isBlank()) continue;
+
+                    Number timeNum = (Number) tx.get("time");
+                    long epochSec = timeNum != null ? timeNum.longValue() : System.currentTimeMillis() / 1000;
+                    LocalDateTime txTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(epochSec), ZoneId.of("Asia/Seoul"));
+
+                    Number feeNum = (Number) tx.get("fee");
+                    long feeSats = feeNum != null ? feeNum.longValue() : 0L;
+
+                    int outputCount = outs.size();
+                    double effectiveBtcKrw = btcPriceKrw > 0 ? btcPriceKrw : 95_000_000.0;
+                    double valueKrw = btcAmount * effectiveBtcKrw;
+
+                    String transferType;
+                    if (btcAmount >= 10.0) {
+                        transferType = "MEGA";
+                    } else if (btcAmount >= 1.0) {
+                        transferType = "LARGE";
+                    } else if (outputCount >= 5 || inputCount >= 5) {
+                        transferType = "MULTI";
+                    } else {
+                        transferType = "STANDARD";
+                    }
+
+                    candidates.add(CryptoNewsDto.WhaleAlertItem.builder()
+                            .id(hash)
+                            .txHash(hash)
+                            .symbol("BTC")
+                            .amount(Math.round(btcAmount * 10000.0) / 10000.0)
+                            .valueKrw((double) Math.round(valueKrw))
+                            .fromAddress(primaryFromAddr != null ? primaryFromAddr : "SegWit/Taproot Input")
+                            .toAddress(primaryToAddr != null ? primaryToAddr : "OP_RETURN / Script Output")
+                            .inputCount(inputCount)
+                            .outputCount(outputCount)
+                            .feeSats(feeSats)
+                            .transferType(transferType)
+                            .timestamp(txTime)
+                            .build());
                 }
             }
         } catch (Exception e) {
             log.warn("실시간 온체인 고래 트랜잭션 조회 에러: {}", e.getMessage());
         }
 
-        // 만약 조회 트랜잭션이 비어있다면 최근 24시간 대표 온체인 대량 이동 내역 생성
-        if (list.isEmpty()) {
-            LocalDateTime now = LocalDateTime.now();
-            list.add(CryptoNewsDto.WhaleAlertItem.builder()
-                    .id(UUID.randomUUID().toString())
-                    .symbol("BTC")
-                    .amount(1250.0)
-                    .valueKrw(111550000000.0)
-                    .fromAddress("익명 고래 지갑 (1P5Z...k8)")
-                    .toAddress("바이낸스(Binance)")
-                    .transferType("INFLOW")
-                    .timestamp(now.minusMinutes(5))
-                    .build());
-        }
+        // BTC 전송량 기준 내림차순 정렬 후 상위 15건 반환
+        candidates.sort((a, b) -> Double.compare(
+                b.getAmount() != null ? b.getAmount() : 0.0,
+                a.getAmount() != null ? a.getAmount() : 0.0));
 
-        return list;
+        if (candidates.size() > 15) {
+            return new ArrayList<>(candidates.subList(0, 15));
+        }
+        return candidates;
     }
 }

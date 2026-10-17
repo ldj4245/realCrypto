@@ -16,11 +16,12 @@ public class CryptoNewsDto {
     @AllArgsConstructor
     public static class FastNewsItem {
         private String id;
-        private String category;    // BREAKING(속보), GOOD(호재), BAD(악재), NOTICE(공시)
-        private String categoryKr;  // 긴급속보, 호재, 악재, 거래소공시
+        private String category;    // BREAKING(속보), GOOD(호재), BAD(악재), NOTICE(뉴스)
+        private String categoryKr;  // 속보, 상승, 하락, 뉴스
         private String title;
         private String summary;
-        private String source;      // Coinness, Bloomberg, Cointelegraph 등
+        private String source;      // 언론사명
+        private String url;         // 원문 기사 링크
         private String targetSymbol;// BTC, ETH, XRP 등
         private LocalDateTime publishedAt;
     }
@@ -31,12 +32,16 @@ public class CryptoNewsDto {
     @AllArgsConstructor
     public static class WhaleAlertItem {
         private String id;
+        private String txHash;       // 실제 비트코인 트랜잭션 해시 (64자리 hex)
         private String symbol;
         private Double amount;
         private Double valueKrw;     // 원화 환산 가치
-        private String fromAddress;  // 익명 지갑, 바이낸스, 업비트 등
-        private String toAddress;    // 바이낸스, 콜드월렛 등
-        private String transferType; // INFLOW(거래소 유입), OUTFLOW(거래소 유출), TRANSFER(지갑 간 이동)
+        private String fromAddress;  // 실제 송신 지갑 주소
+        private String toAddress;    // 실제 수신 지갑 주소
+        private Integer inputCount;  // UTXO 입력 개수
+        private Integer outputCount; // UTXO 출력 개수
+        private Long feeSats;        // 네트워크 수수료 (satoshi)
+        private String transferType; // MEGA(초대형), LARGE(대량), MULTI(다중출력), STANDARD(일반)
         private LocalDateTime timestamp;
     }
 

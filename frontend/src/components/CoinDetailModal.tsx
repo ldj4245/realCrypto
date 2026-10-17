@@ -28,6 +28,7 @@ interface ModalNewsItem {
   categoryKr: string;
   title: string;
   source: string;
+  url?: string;
   publishedAt: string;
 }
 
@@ -47,7 +48,7 @@ export const CoinDetailModal: React.FC<CoinDetailModalProps> = ({
   exchangeRate,
 }) => {
   const { isFavorite, toggleFavorite, addAlert } = usePreference();
-  const [activeTab, setActiveTab] = useState<'CHART' | 'FEED'>('CHART');
+  const [activeTab, setActiveTab] = useState<'CHART' | 'FEED'>('FEED');
   const [chartExchange, setChartExchange] = useState<'BINANCE' | 'UPBIT'>('BINANCE');
   const [chartInterval, setChartInterval] = useState<'15' | '60' | '240' | 'D'>('15');
 
@@ -494,17 +495,24 @@ export const CoinDetailModal: React.FC<CoinDetailModalProps> = ({
               ) : (
                 <div className="divide-y divide-slate-200/70">
                   {newsList.map((n) => (
-                    <div key={n.id} className="py-2.5 first:pt-0 last:pb-0">
+                    <a
+                      key={n.id}
+                      href={n.url || '/news'}
+                      target={n.url ? '_blank' : undefined}
+                      rel="noopener noreferrer"
+                      className="py-2.5 first:pt-0 last:pb-0 block group"
+                    >
                       <div className="flex items-center gap-1.5 mb-1">
-                        <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-bold">
-                          {n.categoryKr || '속보'}
+                        <span className="px-1.5 py-0.5 rounded-xs bg-slate-100 border border-slate-300 text-slate-700 text-[10px] font-bold">
+                          {n.categoryKr || '뉴스'}
                         </span>
                         <span className="text-[10px] text-slate-400">{n.source}</span>
+                        <ExternalLink className="h-2.5 w-2.5 text-slate-300 group-hover:text-blue-600 ml-auto" />
                       </div>
-                      <p className="text-xs font-bold text-slate-800 line-clamp-2 leading-snug">
+                      <p className="text-xs font-bold text-slate-800 group-hover:text-blue-700 line-clamp-2 leading-snug">
                         {n.title}
                       </p>
-                    </div>
+                    </a>
                   ))}
                 </div>
               )}
