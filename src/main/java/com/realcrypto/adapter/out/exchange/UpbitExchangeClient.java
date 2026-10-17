@@ -32,12 +32,21 @@ public class UpbitExchangeClient implements ExchangeClientPort {
     @Value("${upbit.api.url:https://api.upbit.com/v1/ticker}")
     private String upbitUrl;
 
-    private List<String> cachedKrwMarkets = new ArrayList<>();
-    private long lastMarketFetchTime = 0;
+    private volatile List<String> cachedKrwMarkets = new ArrayList<>();
+    private final java.util.Map<String, String> cachedKoreanNames = new java.util.concurrent.ConcurrentHashMap<>();
+    private volatile long lastMarketFetchTime = 0;
 
     @Override
     public boolean supports(String exchangeName) {
         return "UPBIT".equalsIgnoreCase(exchangeName);
+    }
+
+    @Override
+    public java.util.Map<String, String> fetchKoreanNames() {
+        if (cachedKoreanNames.isEmpty()) {
+            getKrwMarkets();
+        }
+        return cachedKoreanNames;
     }
 
     @Override
@@ -109,15 +118,25 @@ public class UpbitExchangeClient implements ExchangeClientPort {
         }
 
         try {
-            String marketUrl = "https://api.upbit.com/v1/market/all?isDetails=false";
+            String marketUrl = "https://api.upbit.com/v1/market/all?isDetails=true";
             String response = restTemplate.getForObject(marketUrl, String.class);
             if (response != null) {
                 JsonNode arrayNode = objectMapper.readTree(response);
                 List<String> markets = new ArrayList<>();
                 for (JsonNode item : arrayNode) {
                     String market = item.path("market").asText();
+                    String koreanName = item.path("korean_name").asText();
                     if (market.startsWith("KRW-")) {
                         markets.add(market);
+                        String symbol = market.substring(4).toUpperCase();
+                        if (koreanName != null && !koreanName.isBlank()) {
+                            cachedKoreanNames.put(symbol, koreanName);
+                        }
+                    } else if (market.contains("-")) {
+                        String symbol = market.substring(market.indexOf('-') + 1).toUpperCase();
+                        if (koreanName != null && !koreanName.isBlank()) {
+                            cachedKoreanNames.putIfAbsent(symbol, koreanName);
+                        }
                     }
                 }
                 if (!markets.isEmpty()) {
