@@ -78,8 +78,8 @@ public class DataInitializer {
                         .category(CategoryType.ARBITRAGE_INFO)
                         .position(PositionType.LONG)
                         .targetSymbol("XRP")
-                        .title("🚨 업비트-바이낸스 리플(XRP) 전송 수수료 및 소요 시간 실측 팁")
-                        .content("해외 거래소로 보낼 때 트론(TRX)이나 리플(XRP)이 제일 빠릅니다. 현재 업비트 리플 출금 수수료는 1 XRP이며, 바이낸스 입금까지 평균 2분 정도 걸립니다. 김프 2.5% 이상일 때 보내서 테더로 바꿔두면 무위험 차익 실현 가능합니다!")
+                        .title("업비트-바이낸스 리플(XRP) 전송 수수료 및 소요 시간 실측 팁")
+                        .content("해외 거래소로 보낼 때 트론(TRX)이나 리플(XRP)이 제일 빠릅니다. 현재 업비트 리플 출금 수수료는 1 XRP이며, 바이낸스 입금까지 평균 2분 정도 걸립니다. 김프 2.5% 이상일 때 보내서 테더로 바꿔두면 무위험 차익 실현 가능합니다.")
                         .authorUsername(demoUser3.getUsername())
                         .authorNickname(demoUser3.getNickname())
                         .build();
@@ -90,7 +90,7 @@ public class DataInitializer {
                         .postId(post1.getId())
                         .authorUsername(demoUser1.getUsername())
                         .authorNickname(demoUser1.getNickname())
-                        .content("좋은 정보 감사합니다! 덕분에 오늘 점심값 벌었네요 ㅎㅎ")
+                        .content("좋은 정보 감사합니다. 덕분에 오늘 점심값 벌었네요.")
                         .build());
 
                 // 2. 익절 인증 글
@@ -98,8 +98,8 @@ public class DataInitializer {
                         .category(CategoryType.PROFIT_LOSS)
                         .position(PositionType.LONG)
                         .targetSymbol("SOL")
-                        .title("솔라나(SOL) 2주 홀딩 끝에 깔끔하게 +48.5% 익절 완료했습니다 🔥")
-                        .content("해외 매수세 들어오는 거 보고 바이낸스에서 잡아서 업비트로 역프 넘어올 때 다 털었습니다. 수익금으로 부모님 용돈 드리고 치킨 시킵니다. 다들 성투하세요!")
+                        .title("솔라나(SOL) 2주 홀딩 끝에 +48.5% 익절 완료했습니다")
+                        .content("해외 매수세 들어오는 거 보고 바이낸스에서 잡아서 업비트로 역프 넘어올 때 다 털었습니다. 수익금으로 부모님 용돈 드리고 치킨 시킵니다. 다들 성투하세요.")
                         .profitRate(48.5)
                         .authorUsername(demoUser2.getUsername())
                         .authorNickname(demoUser2.getNickname())
@@ -125,7 +125,7 @@ public class DataInitializer {
                         .category(CategoryType.FREE)
                         .position(PositionType.LONG)
                         .targetSymbol("ETH")
-                        .title("오늘 장세 분위기 어떠신가요? 이더리움 슬슬 쏠 것 같은데")
+                        .title("오늘 장세 분위기 어떠신가요? 이더리움 슬슬 반등할 것 같은데")
                         .content("알트들 순환매 돌면서 이더리움 가스비도 살짝 오르네요. 오늘 밤 미장 열리면 위로 한번 쏴줄 것 같지 않나요?")
                         .authorUsername(demoUser2.getUsername())
                         .authorNickname(demoUser2.getNickname())
@@ -133,6 +133,16 @@ public class DataInitializer {
                 postRepository.save(post4);
 
                 log.info("초기 커뮤니티 데이터 및 데모 유저 생성 완료.");
+            } else {
+                // 기존 시드 게시글에 남아있는 이모지 제목 정제
+                postRepository.findAll().forEach(p -> {
+                    String title = p.getTitle();
+                    if (title != null && (title.contains("🚨") || title.contains("🔥"))) {
+                        String cleaned = title.replace("🚨", "").replace("🔥", "").trim();
+                        p.update(cleaned, p.getContent(), p.getCategory(), p.getPosition(), p.getTargetSymbol(), p.getProfitRate());
+                        postRepository.save(p);
+                    }
+                });
             }
         };
     }

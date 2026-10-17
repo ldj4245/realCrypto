@@ -6,14 +6,12 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -54,7 +52,7 @@ public class RealNewsClient {
                 Document doc = builder.parse(new InputSource(new StringReader(xml)));
 
                 NodeList itemNodes = doc.getElementsByTagName("item");
-                for (int i = 0; i < Math.min(itemNodes.getLength(), 25); i++) {
+                for (int i = 0; i < Math.min(itemNodes.getLength(), 30); i++) {
                     Element itemElem = (Element) itemNodes.item(i);
                     String rawTitle = getTagValue("title", itemElem);
                     String link = getTagValue("link", itemElem);
@@ -65,7 +63,7 @@ public class RealNewsClient {
 
                     // 언론사 분리 (제목 끝의 ' - 언론사명')
                     String title = rawTitle;
-                    String source = "연합뉴스/크립토";
+                    String source = "크립토뉴스";
                     int lastDash = rawTitle.lastIndexOf(" - ");
                     if (lastDash > 0) {
                         title = rawTitle.substring(0, lastDash).trim();
@@ -75,37 +73,37 @@ public class RealNewsClient {
                     // 관련 코인 심볼 추출
                     String targetSymbol = detectSymbol(title);
 
-                    // 카테고리 태깅 (속보, 호재, 악재, 공시)
+                    // 카테고리 태깅 (속보, 호재, 악재, 뉴스)
                     String category = "NOTICE";
                     String categoryKr = "뉴스";
-                    if (title.contains("속보") || title.contains("긴급") || title.contains("돌파")) {
+                    if (title.contains("속보") || title.contains("긴급") || title.contains("돌파") || title.contains("사상 최고")) {
                         category = "BREAKING";
-                        categoryKr = "긴급속보";
-                    } else if (title.contains("상승") || title.contains("급등") || title.contains("호재") || title.contains("승인") || title.contains("출시") || title.contains("상장")) {
+                        categoryKr = "속보";
+                    } else if (title.contains("상승") || title.contains("급등") || title.contains("반등") || title.contains("승인") || title.contains("유입") || title.contains("상장")) {
                         category = "GOOD";
-                        categoryKr = "호재";
-                    } else if (title.contains("하락") || title.contains("급락") || title.contains("악재") || title.contains("해킹") || title.contains("유출") || title.contains("규제") || title.contains("퇴출")) {
+                        categoryKr = "상승";
+                    } else if (title.contains("하락") || title.contains("급락") || title.contains("폭락") || title.contains("해킹") || title.contains("유출") || title.contains("규제") || title.contains("유의")) {
                         category = "BAD";
-                        categoryKr = "악재";
+                        categoryKr = "하락";
                     }
 
-                    // 발행 시간 파싱
+                    // 발행 시간 파싱 (GMT -> KST 변환)
                     LocalDateTime publishedAt = LocalDateTime.now();
-                    if (pubDateStr != null) {
+                    if (pubDateStr != null && !pubDateStr.isEmpty()) {
                         try {
                             DateTimeFormatter formatter = DateTimeFormatter.RFC_1123_DATE_TIME;
-                            ZonedDateTime zdt = ZonedDateTime.parse(pubDateStr, formatter);
+                            ZonedDateTime zdt = ZonedDateTime.parse(pubDateStr, formatter)
+                                    .withZoneSameInstant(ZoneId.of("Asia/Seoul"));
                             publishedAt = zdt.toLocalDateTime();
                         } catch (Exception ignored) {}
                     }
 
-                    // 요약 텍스트 정제
+                    // 구글 뉴스 RSS description은 제목+언론사 반복인 경우가 많으므로 중복 제거
                     String cleanSummary = cleanHtml(description);
-                    if (cleanSummary.length() > 150) {
-                        cleanSummary = cleanSummary.substring(0, 150) + "...";
-                    }
-                    if (cleanSummary.isEmpty()) {
-                        cleanSummary = title;
+                    if (cleanSummary.startsWith(title) || cleanSummary.equals(rawTitle)) {
+                        cleanSummary = "";
+                    } else if (cleanSummary.length() > 140) {
+                        cleanSummary = cleanSummary.substring(0, 140) + "...";
                     }
 
                     items.add(CryptoNewsDto.FastNewsItem.builder()
@@ -115,6 +113,7 @@ public class RealNewsClient {
                             .title(title)
                             .summary(cleanSummary)
                             .source(source)
+                            .url(link != null && !link.isBlank() ? link : "https://news.google.com")
                             .targetSymbol(targetSymbol)
                             .publishedAt(publishedAt)
                             .build());
@@ -148,6 +147,12 @@ public class RealNewsClient {
         if (upper.contains("도지") || upper.contains("DOGE")) return "DOGE";
         if (upper.contains("트론") || upper.contains("TRX")) return "TRX";
         if (upper.contains("에이다") || upper.contains("ADA")) return "ADA";
+        if (upper.contains("수이") || upper.contains("SUI")) return "SUI";
+        if (upper.contains("체인링크") || upper.contains("LINK")) return "LINK";
+        if (upper.contains("아발란체") || upper.contains("AVAX")) return "AVAX";
+        if (upper.contains("시바이누") || upper.contains("SHIB")) return "SHIB";
+        if (upper.contains("페페") || upper.contains("PEPE")) return "PEPE";
+        if (upper.contains("앱토스") || upper.contains("APT")) return "APT";
         return null;
     }
 }

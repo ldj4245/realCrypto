@@ -40,18 +40,23 @@ export interface FastNewsItem {
   title: string;
   summary: string;
   source: string;
+  url?: string;
   targetSymbol?: string;
   publishedAt: string;
 }
 
 export interface WhaleAlertItem {
   id: string;
+  txHash?: string;
   symbol: string;
   amount: number;
   valueKrw: number;
   fromAddress: string;
   toAddress: string;
-  transferType: 'INFLOW' | 'OUTFLOW' | 'TRANSFER';
+  inputCount?: number;
+  outputCount?: number;
+  feeSats?: number;
+  transferType: 'MEGA' | 'LARGE' | 'MULTI' | 'STANDARD' | 'INFLOW' | 'OUTFLOW' | 'TRANSFER';
   timestamp: string;
 }
 

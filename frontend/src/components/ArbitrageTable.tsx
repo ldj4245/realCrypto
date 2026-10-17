@@ -10,25 +10,25 @@ import {
 import {
   Search,
   ArrowUpDown,
-  Zap,
-  Percent,
-  CheckCircle2,
-  AlertTriangle,
   Star,
+  MessageSquare,
 } from 'lucide-react';
 import { usePreference } from '@/context/PreferenceContext';
 
 interface ArbitrageTableProps {
   items: TripleArbitrage[];
   exchangeRate: number;
+  selectedSymbol?: string;
   onSelectCoin: (coin: TripleArbitrage) => void;
+  onOpenDetailModal?: (coin: TripleArbitrage) => void;
   priceFlashMap: Record<string, 'up' | 'down' | undefined>;
 }
 
 export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
   items,
-  exchangeRate,
+  selectedSymbol,
   onSelectCoin,
+  onOpenDetailModal,
   priceFlashMap,
 }) => {
   const { favorites, isFavorite, toggleFavorite } = usePreference();
@@ -36,10 +36,9 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<SortField>('volume');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-  const [showFundingRate, setShowFundingRate] = useState(false);
+  const [showFundingRate, setShowFundingRate] = useState(true);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
-  // 거래대금 억원 단위 포맷팅
   const formatTradeValueKRW = (val: number | null | undefined) => {
     if (!val || val <= 0) return '-';
     const eok = Math.floor(val / 100_000_000);
@@ -47,16 +46,24 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
       const jo = (eok / 10_000).toFixed(1);
       return `${jo}조`;
     }
-    return `${eok.toLocaleString()}억`;
+    return `${eok.toLocaleString('ko-KR')}억`;
   };
 
-  // 금액 포맷팅
   const formatKRW = (num: number | null | undefined) => {
     if (num === null || num === undefined) return '-';
     if (num >= 100) {
-      return Math.round(num).toLocaleString('ko-KR') + ' ₩';
+      return Math.round(num).toLocaleString('ko-KR');
     }
-    return num.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) + ' ₩';
+    return num.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  };
+
+  const formatDiffKRW = (diff: number | null | undefined) => {
+    if (diff === null || diff === undefined) return '';
+    const sign = diff > 0 ? '+' : '';
+    if (Math.abs(diff) >= 100) {
+      return `${sign}${Math.round(diff).toLocaleString('ko-KR')}원`;
+    }
+    return `${sign}${diff.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}원`;
   };
 
   const formatUSD = (num: number | null | undefined) => {
@@ -79,9 +86,8 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
     }
   };
 
-  // 필터링 및 정렬 처리
   const filteredAndSortedItems = useMemo(() => {
-    let result = items.filter((item) => {
+    const result = items.filter((item) => {
       if (showFavoritesOnly && !favorites.includes(item.symbol.toUpperCase())) {
         return false;
       }
@@ -100,8 +106,8 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
         return favA ? -1 : 1;
       }
 
-      let valA: number = 0;
-      let valB: number = 0;
+      let valA = 0;
+      let valB = 0;
 
       switch (sortField) {
         case 'premium': {
@@ -157,199 +163,195 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
   }, [items, searchQuery, sortField, sortOrder, exchangeMode, showFavoritesOnly, favorites]);
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+    <div className="bg-white rounded-md border border-slate-200 overflow-hidden">
       
-      {/* Top Filter & Exchange Tabs Bar */}
-      <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Top Control & Filter Bar */}
+      <div className="p-3 border-b border-slate-200 bg-slate-50/70 flex flex-col md:flex-row md:items-center justify-between gap-2.5">
         
-        {/* Exchange Mode Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto">
-          <div className="flex items-center p-1 bg-slate-100/80 rounded-2xl border border-slate-200/60 shrink-0">
+        {/* Left: Exchange Mode Selector & Toggle Buttons */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          <div className="flex items-center border border-slate-300 rounded-xs bg-white overflow-hidden shrink-0 text-xs font-bold">
             <button
+              type="button"
               onClick={() => setExchangeMode('UPBIT_BINANCE')}
-              className={`px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition ${
+              className={`px-3 py-1.5 transition ${
                 exchangeMode === 'UPBIT_BINANCE'
-                  ? 'bg-white text-blue-600 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
-              업비트 vs 바이낸스
+              업비트 · 바이낸스
             </button>
             <button
+              type="button"
               onClick={() => setExchangeMode('BITHUMB_BINANCE')}
-              className={`px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition ${
+              className={`px-3 py-1.5 border-l border-slate-300 transition ${
                 exchangeMode === 'BITHUMB_BINANCE'
-                  ? 'bg-white text-orange-600 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
-              빗썸 vs 바이낸스
+              빗썸 · 바이낸스
             </button>
             <button
+              type="button"
               onClick={() => setExchangeMode('UPBIT_BITHUMB')}
-              className={`px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition ${
+              className={`px-3 py-1.5 border-l border-slate-300 transition ${
                 exchangeMode === 'UPBIT_BITHUMB'
-                  ? 'bg-white text-indigo-600 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
-              업비트 vs 빗썸 (국내)
+              업비트 · 빗썸
             </button>
           </div>
 
-          {/* Favorites Filter Toggle */}
           <button
+            type="button"
             onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-extrabold transition border whitespace-nowrap ${
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xs text-xs font-bold border transition whitespace-nowrap ${
               showFavoritesOnly
-                ? 'bg-amber-50 text-amber-800 border-amber-200 shadow-2xs'
-                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                ? 'bg-slate-900 text-white border-slate-900'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
             }`}
           >
-            <Star className={`h-3.5 w-3.5 ${showFavoritesOnly ? 'fill-amber-400 text-amber-500' : 'text-slate-400'}`} />
-            <span>관심종목 ({favorites.length})</span>
+            <Star className={`h-3 w-3 ${showFavoritesOnly ? 'fill-amber-400 text-amber-400' : 'text-slate-400'}`} />
+            <span>관심 ({favorites.length})</span>
           </button>
 
-          {/* Funding Rate Toggle Switch */}
           <button
+            type="button"
             onClick={() => setShowFundingRate(!showFundingRate)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-extrabold transition border whitespace-nowrap ${
+            className={`px-2.5 py-1.5 rounded-xs text-xs font-bold border transition whitespace-nowrap ${
               showFundingRate
-                ? 'bg-purple-50 text-purple-700 border-purple-200 shadow-2xs'
-                : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                ? 'bg-slate-900 text-white border-slate-900'
+                : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
             }`}
           >
-            <Zap className="h-3.5 w-3.5 text-purple-600" />
-            <span>선물 펀딩비 {showFundingRate ? 'ON' : 'OFF'}</span>
+            펀딩비 {showFundingRate ? '표시' : '숨김'}
           </button>
         </div>
 
-        {/* Search & Stats count */}
-        <div className="flex items-center gap-3">
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        {/* Right: Search Input & Count */}
+        <div className="flex items-center gap-2.5">
+          <div className="relative flex-1 sm:w-56">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
             <input
               type="text"
-              placeholder="코인명 / 심볼 검색 (BTC, 리플...)"
+              placeholder="종목명 또는 심볼 검색 (BTC, 리플)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+              className="w-full bg-white border border-slate-300 rounded-xs pl-8 pr-3 py-1.5 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 transition"
             />
           </div>
-          <span className="text-xs text-slate-400 font-semibold whitespace-nowrap hidden sm:inline">
-            총 {filteredAndSortedItems.length}개 종목
+          <span className="text-[11px] text-slate-500 font-bold tabular-nums whitespace-nowrap hidden sm:inline">
+            {filteredAndSortedItems.length}종목
           </span>
         </div>
 
       </div>
 
-      {/* Main Table */}
+      {/* High-Density Arbitrage Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="bg-slate-50/70 border-b border-slate-200/80 text-slate-500 font-bold tracking-wider">
-              
-              {/* Symbol / Name */}
+            <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-600 font-bold text-[11px]">
               <th
                 onClick={() => handleSort('symbol')}
-                className="py-3.5 px-4 sm:px-6 cursor-pointer hover:text-slate-900 transition select-none"
+                className="py-2.5 px-3 cursor-pointer hover:text-slate-900 transition select-none"
               >
-                <div className="flex items-center gap-1.5">
-                  <span>코인명</span>
+                <div className="flex items-center gap-1">
+                  <span>종목명</span>
                   <ArrowUpDown className="h-3 w-3 text-slate-400" />
                 </div>
               </th>
 
-              {/* Primary Exchange Price */}
               <th
                 onClick={() => handleSort('price')}
-                className="py-3.5 px-4 cursor-pointer hover:text-slate-900 transition select-none text-right"
+                className="py-2.5 px-3 cursor-pointer hover:text-slate-900 transition select-none text-right"
               >
-                <div className="flex items-center justify-end gap-1.5">
+                <div className="flex items-center justify-end gap-1">
                   <span>
-                    {exchangeMode === 'BITHUMB_BINANCE' ? '빗썸 현재가' : '업비트 현재가'}
+                    {exchangeMode === 'BITHUMB_BINANCE' ? '빗썸 현재가(원)' : '업비트 현재가(원)'}
                   </span>
                   <ArrowUpDown className="h-3 w-3 text-slate-400" />
                 </div>
               </th>
 
-              {/* 24h Change */}
+              <th className="py-2.5 px-3 text-right">
+                {exchangeMode === 'UPBIT_BITHUMB' ? '빗썸 현재가(원)' : '바이낸스 (원화환산 / USD)'}
+              </th>
+
               <th
                 onClick={() => handleSort('change')}
-                className="py-3.5 px-4 cursor-pointer hover:text-slate-900 transition select-none text-right"
+                className="py-2.5 px-3 cursor-pointer hover:text-slate-900 transition select-none text-right"
               >
-                <div className="flex items-center justify-end gap-1.5">
+                <div className="flex items-center justify-end gap-1">
                   <span>전일대비</span>
                   <ArrowUpDown className="h-3 w-3 text-slate-400" />
                 </div>
               </th>
 
-              {/* Secondary Exchange Price */}
-              <th className="py-3.5 px-4 text-right">
-                {exchangeMode === 'UPBIT_BITHUMB' ? '빗썸 가격' : '바이낸스 가격 (USD / KRW)'}
-              </th>
-
-              {/* Arbitrage Rate */}
               <th
                 onClick={() => handleSort('premium')}
-                className="py-3.5 px-4 sm:px-6 cursor-pointer hover:text-slate-900 transition select-none text-right min-w-[140px]"
+                className="py-2.5 px-3 cursor-pointer hover:text-slate-900 transition select-none text-right min-w-[130px]"
               >
-                <div className="flex items-center justify-end gap-1.5">
-                  <span>
-                    {exchangeMode === 'UPBIT_BITHUMB' ? '가격 격차율' : '김치 프리미엄'}
-                  </span>
+                <div className="flex items-center justify-end gap-1">
+                  <span>{exchangeMode === 'UPBIT_BITHUMB' ? '국내 격차 (차액)' : '김프 (차액)'}</span>
                   <ArrowUpDown className="h-3 w-3 text-slate-400" />
                 </div>
               </th>
 
-              {/* Optional: Binance Futures Funding Rate Column */}
               {showFundingRate && (
-                <th className="py-3.5 px-4 text-right min-w-[120px] bg-purple-50/40 text-purple-900">
-                  <span>바이낸스 펀딩비 (8h / 연)</span>
+                <th className="py-2.5 px-3 text-right hidden lg:table-cell">
+                  <span>펀딩비(8h)</span>
                 </th>
               )}
 
-              {/* 24h Volume */}
               <th
                 onClick={() => handleSort('volume')}
-                className="py-3.5 px-4 sm:px-6 cursor-pointer hover:text-slate-900 transition select-none text-right hidden sm:table-cell"
+                className="py-2.5 px-3 cursor-pointer hover:text-slate-900 transition select-none text-right hidden sm:table-cell"
               >
-                <div className="flex items-center justify-end gap-1.5">
-                  <span>24시간 거래대금</span>
+                <div className="flex items-center justify-end gap-1">
+                  <span>거래대금(24h)</span>
                   <ArrowUpDown className="h-3 w-3 text-slate-400" />
                 </div>
               </th>
-
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-200/70">
             {filteredAndSortedItems.length === 0 ? (
               <tr>
                 <td colSpan={showFundingRate ? 7 : 6} className="py-12 text-center text-slate-400 font-medium">
-                  검색된 코인 데이터가 없습니다.
+                  조건에 일치하는 종목이 없습니다.
                 </td>
               </tr>
             ) : (
               filteredAndSortedItems.map((item) => {
                 const flash = priceFlashMap[item.symbol];
+                const isSelected = selectedSymbol === item.symbol;
 
-                // Exchange Mode Calculation
                 let primaryPrice: number | null = null;
                 let primaryChange: number | null = null;
                 let secondaryPriceNode: React.ReactNode = null;
                 let premium: number | null = null;
+                let diffKrw: number | null = null;
 
                 if (exchangeMode === 'UPBIT_BINANCE') {
                   primaryPrice = item.upbitPrice;
                   primaryChange = item.upbitChangeRate;
                   premium = item.upbitBinancePremium;
+                  diffKrw =
+                    item.upbitPrice && item.binancePriceKrw
+                      ? item.upbitPrice - item.binancePriceKrw
+                      : null;
                   secondaryPriceNode = (
-                    <div className="text-right">
-                      <span className="font-bold text-slate-800 tabular-nums block">
+                    <div className="text-right tabular-nums">
+                      <span className="font-semibold text-slate-800 block leading-tight">
                         {formatKRW(item.binancePriceKrw)}
                       </span>
-                      <span className="text-[10px] text-slate-400 tabular-nums block">
+                      <span className="text-[10px] text-slate-400 block leading-tight mt-0.5">
                         {formatUSD(item.binancePriceUsd)}
                       </span>
                     </div>
@@ -358,27 +360,34 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
                   primaryPrice = item.bithumbPrice;
                   primaryChange = item.bithumbChangeRate;
                   premium = item.bithumbBinancePremium;
+                  diffKrw =
+                    item.bithumbPrice && item.binancePriceKrw
+                      ? item.bithumbPrice - item.binancePriceKrw
+                      : null;
                   secondaryPriceNode = (
-                    <div className="text-right">
-                      <span className="font-bold text-slate-800 tabular-nums block">
+                    <div className="text-right tabular-nums">
+                      <span className="font-semibold text-slate-800 block leading-tight">
                         {formatKRW(item.binancePriceKrw)}
                       </span>
-                      <span className="text-[10px] text-slate-400 tabular-nums block">
+                      <span className="text-[10px] text-slate-400 block leading-tight mt-0.5">
                         {formatUSD(item.binancePriceUsd)}
                       </span>
                     </div>
                   );
                 } else {
-                  // UPBIT_BITHUMB
                   primaryPrice = item.upbitPrice;
                   primaryChange = item.upbitChangeRate;
                   premium = item.upbitBithumbGap;
+                  diffKrw =
+                    item.upbitPrice && item.bithumbPrice
+                      ? item.upbitPrice - item.bithumbPrice
+                      : null;
                   secondaryPriceNode = (
-                    <div className="text-right">
-                      <span className="font-bold text-slate-800 tabular-nums block">
+                    <div className="text-right tabular-nums">
+                      <span className="font-semibold text-slate-800 block leading-tight">
                         {formatKRW(item.bithumbPrice)}
                       </span>
-                      <span className="text-[10px] text-slate-400 tabular-nums block">
+                      <span className="text-[10px] text-slate-400 block leading-tight mt-0.5">
                         {item.bithumbChangeRate !== null
                           ? `${item.bithumbChangeRate >= 0 ? '+' : ''}${item.bithumbChangeRate.toFixed(2)}%`
                           : '-'}
@@ -396,7 +405,11 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
                   <tr
                     key={item.symbol}
                     onClick={() => onSelectCoin(item)}
-                    className={`hover:bg-slate-50/80 transition duration-150 cursor-pointer ${
+                    className={`transition duration-100 cursor-pointer ${
+                      isSelected
+                        ? 'bg-blue-50/40'
+                        : 'hover:bg-slate-50'
+                    } ${
                       flash === 'up'
                         ? 'animate-flash-up'
                         : flash === 'down'
@@ -404,16 +417,16 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
                         : ''
                     }`}
                   >
-                    {/* Symbol / Korean Name */}
-                    <td className="py-3 px-4 sm:px-6">
-                      <div className="flex items-center gap-2.5">
+                    {/* 1. Symbol & Korean Name */}
+                    <td className="py-2.5 px-3">
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             toggleFavorite(item.symbol);
                           }}
-                          className="p-1 -ml-1 rounded-md hover:bg-slate-100 transition text-slate-300 hover:text-amber-500"
+                          className="p-0.5 text-slate-300 hover:text-amber-500 transition"
                           title={favorited ? '관심종목 해제' : '관심종목 등록'}
                         >
                           <Star
@@ -422,47 +435,67 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
                             }`}
                           />
                         </button>
-                        <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 font-extrabold flex items-center justify-center text-[10px]">
-                          {item.symbol.slice(0, 3)}
-                        </div>
-                        <div>
+
+                        <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
                             <span className="font-bold text-slate-900 text-xs leading-tight">
-                              {item.symbol}
+                              {item.nameKr}
                             </span>
-                            {item.isWalletNormal === false ? (
+                            {item.isWalletNormal === false && (
                               <span
-                                className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 leading-none"
+                                className="px-1 py-0.2 rounded-xs text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-300 leading-none"
                                 title="거래소 간 심볼 불일치 또는 입출금 중단으로 인한 시세 괴리"
                               >
-                                시세괴리
+                                괴리주의
                               </span>
-                            ) : (
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" title="시세 정상" />
                             )}
                           </div>
-                          <span className="text-[11px] text-slate-400 font-medium block leading-tight">
-                            {item.nameKr}
-                          </span>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-[10px] text-slate-400 font-bold leading-tight">
+                              {item.symbol}
+                            </span>
+                            {onOpenDetailModal && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onOpenDetailModal(item);
+                                }}
+                                className="text-[10px] text-slate-400 hover:text-blue-600 flex items-center gap-0.5"
+                                title="종목 뉴스 및 토론"
+                              >
+                                <MessageSquare className="h-2.5 w-2.5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>
 
-                    {/* Primary Price */}
-                    <td className="py-3 px-4 text-right">
-                      <span className="font-extrabold text-slate-900 text-xs tabular-nums">
+                    {/* 2. Primary Price */}
+                    <td className="py-2.5 px-3 text-right tabular-nums">
+                      <span
+                        className={`font-bold text-xs ${
+                          primaryChange !== null && primaryChange > 0
+                            ? 'text-red-600'
+                            : primaryChange !== null && primaryChange < 0
+                            ? 'text-blue-600'
+                            : 'text-slate-900'
+                        }`}
+                      >
                         {formatKRW(primaryPrice)}
                       </span>
                     </td>
 
-                    {/* 24h Change */}
-                    <td className="py-3 px-4 text-right">
+                    {/* 3. Secondary Price */}
+                    <td className="py-2.5 px-3 text-right">{secondaryPriceNode}</td>
+
+                    {/* 4. 24h Change Rate */}
+                    <td className="py-2.5 px-3 text-right tabular-nums">
                       {primaryChange !== null && primaryChange !== undefined ? (
                         <span
-                          className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md font-bold text-[11px] tabular-nums ${
-                            isChangePositive
-                              ? 'bg-rose-50 text-rose-600'
-                              : 'bg-blue-50 text-blue-600'
+                          className={`font-bold text-xs ${
+                            isChangePositive ? 'text-red-600' : 'text-blue-600'
                           }`}
                         >
                           {isChangePositive ? '+' : ''}
@@ -473,43 +506,43 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
                       )}
                     </td>
 
-                    {/* Secondary Price */}
-                    <td className="py-3 px-4 text-right">{secondaryPriceNode}</td>
-
-                    {/* Arbitrage Premium */}
-                    <td className="py-3 px-4 sm:px-6 text-right">
+                    {/* 5. Kimchi Premium % + KRW Diff (Kimpga Signature Column) */}
+                    <td className="py-2.5 px-3 text-right tabular-nums">
                       {premium !== null && premium !== undefined ? (
-                        <div className="inline-flex flex-col items-end">
+                        <div>
                           <span
-                            className={`font-black text-xs tabular-nums px-2.5 py-0.5 rounded-lg border ${
-                              isPremiumPositive
-                                ? 'bg-rose-50 text-rose-600 border-rose-200'
-                                : 'bg-blue-50 text-blue-600 border-blue-200'
+                            className={`font-extrabold text-xs block leading-tight ${
+                              isPremiumPositive ? 'text-red-600' : 'text-blue-600'
                             }`}
                           >
                             {isPremiumPositive ? '+' : ''}
                             {premium.toFixed(2)}%
                           </span>
+                          {diffKrw !== null && (
+                            <span className="text-[10px] text-slate-400 font-medium block leading-tight mt-0.5">
+                              {formatDiffKRW(diffKrw)}
+                            </span>
+                          )}
                         </div>
                       ) : (
-                        <span className="text-slate-400 font-medium">-</span>
+                        <span className="text-slate-400">-</span>
                       )}
                     </td>
 
-                    {/* Optional Funding Rate Column */}
+                    {/* 6. Binance Futures Funding Rate */}
                     {showFundingRate && (
-                      <td className="py-3 px-4 text-right bg-purple-50/20">
+                      <td className="py-2.5 px-3 text-right tabular-nums hidden lg:table-cell">
                         {item.fundingRatePercent !== null && item.fundingRatePercent !== undefined ? (
                           <div>
                             <span
-                              className={`font-extrabold text-xs tabular-nums block ${
-                                item.fundingRatePercent >= 0 ? 'text-rose-600' : 'text-blue-600'
+                              className={`font-bold text-[11px] block leading-tight ${
+                                item.fundingRatePercent >= 0 ? 'text-red-600' : 'text-blue-600'
                               }`}
                             >
                               {item.fundingRatePercent >= 0 ? '+' : ''}
                               {item.fundingRatePercent.toFixed(4)}%
                             </span>
-                            <span className="text-[10px] text-slate-400 font-bold tabular-nums block">
+                            <span className="text-[10px] text-slate-400 block leading-tight mt-0.5">
                               연 {item.fundingApr ? `${item.fundingApr.toFixed(1)}%` : '-'}
                             </span>
                           </div>
@@ -519,9 +552,9 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
                       </td>
                     )}
 
-                    {/* 24h Volume */}
-                    <td className="py-3 px-4 sm:px-6 text-right hidden sm:table-cell">
-                      <span className="font-semibold text-slate-600 text-xs tabular-nums">
+                    {/* 7. 24h Trade Volume */}
+                    <td className="py-2.5 px-3 text-right tabular-nums hidden sm:table-cell">
+                      <span className="font-semibold text-slate-600 text-[11px]">
                         {formatTradeValueKRW(totalVolume)}
                       </span>
                     </td>
