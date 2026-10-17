@@ -22,7 +22,7 @@ import {
 interface NavbarProps {
   exchangeRate?: number;
   setExchangeRate?: (rate: number) => void;
-  countdown?: number;
+  isStreamConnected?: boolean;
   onRefresh?: () => void;
   isLoading?: boolean;
   averagePremium?: number | null;
@@ -31,7 +31,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   exchangeRate = 1380,
   setExchangeRate,
-  countdown,
+  isStreamConnected = false,
   onRefresh,
   isLoading = false,
   averagePremium = null,
@@ -145,15 +145,25 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
                 )}
 
-                {countdown !== undefined && (
-                  <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-100 text-slate-600 text-xs font-semibold tabular-nums">
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-600"></span>
-                    </span>
-                    <span>{countdown}s</span>
-                  </div>
-                )}
+                <div
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold border ${
+                    isStreamConnected
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-slate-100 text-slate-500 border-slate-200'
+                  }`}
+                >
+                  <span className="relative flex h-1.5 w-1.5">
+                    {isStreamConnected && (
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    )}
+                    <span
+                      className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
+                        isStreamConnected ? 'bg-emerald-600' : 'bg-slate-400'
+                      }`}
+                    ></span>
+                  </span>
+                  <span>{isStreamConnected ? '실시간 연결' : '연결 대기'}</span>
+                </div>
 
                 {onRefresh && (
                   <button
