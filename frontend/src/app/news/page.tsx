@@ -201,7 +201,7 @@ export default function NewsAndWhalePage() {
                 </p>
               </div>
 
-              <div className="flex items-center border border-slate-300 rounded-xs bg-white overflow-hidden text-xs font-bold self-start sm:self-auto">
+              <div className="flex items-center border border-slate-300 rounded-xs bg-white overflow-x-auto no-scrollbar max-w-full text-xs font-bold self-start sm:self-auto whitespace-nowrap">
                 {[
                   { key: 'ALL', label: '전체' },
                   { key: 'BREAKING', label: '속보' },
@@ -213,7 +213,7 @@ export default function NewsAndWhalePage() {
                     key={tab.key}
                     type="button"
                     onClick={() => setActiveNewsCategory(tab.key)}
-                    className={`px-2.5 py-1 transition ${idx > 0 ? 'border-l border-slate-300' : ''} ${
+                    className={`px-2.5 py-1 transition whitespace-nowrap shrink-0 ${idx > 0 ? 'border-l border-slate-300' : ''} ${
                       activeNewsCategory === tab.key
                         ? 'bg-slate-900 text-white'
                         : 'text-slate-600 hover:bg-slate-50'
@@ -323,8 +323,8 @@ export default function NewsAndWhalePage() {
                   return (
                     <div key={whale.id} className="p-3.5 hover:bg-slate-50/60 transition text-xs">
                       {/* Row 1: Amount & Value */}
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <div className="flex items-center gap-2 tabular-nums">
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-2 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 sm:gap-2 tabular-nums">
                           <span className="px-1.5 py-0.5 rounded-xs bg-slate-100 border border-slate-300 font-black text-[11px] text-slate-900">
                             {whale.symbol}
                           </span>
@@ -336,7 +336,7 @@ export default function NewsAndWhalePage() {
                           </span>
                         </div>
 
-                        <span className={`px-1.5 py-0.5 rounded-xs text-[10px] font-bold border ${badge.cls}`}>
+                        <span className={`px-1.5 py-0.5 rounded-xs text-[10px] font-bold border whitespace-nowrap ${badge.cls}`}>
                           {badge.label}
                         </span>
                       </div>
