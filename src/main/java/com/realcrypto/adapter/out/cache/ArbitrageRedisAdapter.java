@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -30,8 +31,18 @@ public class ArbitrageRedisAdapter implements ArbitrageCachePort {
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // Redis 연결 실패 시 무중단 동작을 위한 로컬 인메모리 폴백 캐시
+    @Value("${app.redis.enabled:true}")
+    private boolean redisEnabled;
+
+    // Redis 미연결 환경에서 매 요청마다 타임아웃 대기를 방지하기 위한 서킷 브레이커 타임스탬프
+    private volatile long redisSkipUntilEpochMs = 0L;
+
+    // Redis 연결 실패 또는 비활성화 시 무중단 동작을 위한 로컬 인메모리 폴백 캐시
     private final Map<String, TripleArbitrageDto> localFallbackMap = new ConcurrentHashMap<>();
+
+    private boolean isRedisAvailable() {
+        return redisEnabled && System.currentTimeMillis() >= redisSkipUntilEpochMs;
+    }
 
     @Override
     public void saveAll(List<TripleArbitrageDto> list) {
@@ -45,38 +56,45 @@ public class ArbitrageRedisAdapter implements ArbitrageCachePort {
         }
 
         // 2. Redis 캐시 갱신 시도
+        if (!isRedisAvailable()) {
+            return;
+        }
         try {
             redisTemplate.opsForValue().set(REDIS_ALL_KEY, list, 30, TimeUnit.SECONDS);
             for (TripleArbitrageDto item : list) {
                 redisTemplate.opsForValue().set(REDIS_KEY_PREFIX + item.getSymbol().toUpperCase(), item, 30, TimeUnit.SECONDS);
             }
         } catch (Exception e) {
-            log.debug("Redis 저장 중 경고 (로컬 메모리 캐시 사용 중): {}", e.getMessage());
+            redisSkipUntilEpochMs = System.currentTimeMillis() + 60_000L;
+            log.debug("Redis 저장 중 경고 (60초간 로컬 메모리 캐시 우선 사용): {}", e.getMessage());
         }
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public List<TripleArbitrageDto> findAll() {
-        try {
-            Object cached = redisTemplate.opsForValue().get(REDIS_ALL_KEY);
-            if (cached != null) {
-                if (cached instanceof List) {
-                    List<?> rawList = (List<?>) cached;
-                    List<TripleArbitrageDto> result = new ArrayList<>();
-                    for (Object obj : rawList) {
-                        if (obj instanceof TripleArbitrageDto) {
-                            result.add((TripleArbitrageDto) obj);
-                        } else {
-                            TripleArbitrageDto converted = objectMapper.convertValue(obj, TripleArbitrageDto.class);
-                            result.add(converted);
+        if (isRedisAvailable()) {
+            try {
+                Object cached = redisTemplate.opsForValue().get(REDIS_ALL_KEY);
+                if (cached != null) {
+                    if (cached instanceof List) {
+                        List<?> rawList = (List<?>) cached;
+                        List<TripleArbitrageDto> result = new ArrayList<>();
+                        for (Object obj : rawList) {
+                            if (obj instanceof TripleArbitrageDto) {
+                                result.add((TripleArbitrageDto) obj);
+                            } else {
+                                TripleArbitrageDto converted = objectMapper.convertValue(obj, TripleArbitrageDto.class);
+                                result.add(converted);
+                            }
                         }
+                        return result;
                     }
-                    return result;
                 }
+            } catch (Exception e) {
+                redisSkipUntilEpochMs = System.currentTimeMillis() + 60_000L;
+                log.debug("Redis 조회 중 경고 (로컬 메모리 캐시에서 조회): {}", e.getMessage());
             }
-        } catch (Exception e) {
-            log.debug("Redis 조회 중 경고 (로컬 메모리 캐시에서 조회): {}", e.getMessage());
         }
 
         // 로컬 폴백 반환
@@ -90,17 +108,20 @@ public class ArbitrageRedisAdapter implements ArbitrageCachePort {
         if (symbol == null) return Optional.empty();
         String upper = symbol.toUpperCase();
 
-        try {
-            Object cached = redisTemplate.opsForValue().get(REDIS_KEY_PREFIX + upper);
-            if (cached != null) {
-                if (cached instanceof TripleArbitrageDto) {
-                    return Optional.of((TripleArbitrageDto) cached);
-                } else {
-                    return Optional.of(objectMapper.convertValue(cached, TripleArbitrageDto.class));
+        if (isRedisAvailable()) {
+            try {
+                Object cached = redisTemplate.opsForValue().get(REDIS_KEY_PREFIX + upper);
+                if (cached != null) {
+                    if (cached instanceof TripleArbitrageDto) {
+                        return Optional.of((TripleArbitrageDto) cached);
+                    } else {
+                        return Optional.of(objectMapper.convertValue(cached, TripleArbitrageDto.class));
+                    }
                 }
+            } catch (Exception e) {
+                redisSkipUntilEpochMs = System.currentTimeMillis() + 60_000L;
+                log.debug("Redis 단건 조회 경고: {}", e.getMessage());
             }
-        } catch (Exception e) {
-            log.debug("Redis 단건 조회 경고: {}", e.getMessage());
         }
 
         return Optional.ofNullable(localFallbackMap.get(upper));
