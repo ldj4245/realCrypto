@@ -39,12 +39,13 @@ public class PostController {
     public ResponseEntity<Page<CommunityDto.PostListItem>> getPosts(
             @RequestParam(required = false) CategoryType category,
             @RequestParam(required = false) PositionType position,
+            @RequestParam(required = false) String symbol,
             @RequestParam(required = false) String query,
             @RequestParam(defaultValue = "false") boolean onlyBest,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        Page<CommunityDto.PostListItem> posts = postService.getPosts(category, position, query, onlyBest, page, size);
+        Page<CommunityDto.PostListItem> posts = postService.getPosts(category, position, symbol, query, onlyBest, page, size);
         return ResponseEntity.ok(posts);
     }
 

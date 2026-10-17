@@ -41,14 +41,28 @@ public class PostService {
             boolean onlyBest,
             int page,
             int size) {
+        return getPosts(category, position, null, query, onlyBest, page, size);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CommunityDto.PostListItem> getPosts(
+            CategoryType category,
+            PositionType position,
+            String symbol,
+            String query,
+            boolean onlyBest,
+            int page,
+            int size) {
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Post> postPage;
+        String cleanSymbol = (symbol != null && !symbol.trim().isEmpty()) ? symbol.trim().toUpperCase() : null;
+        String cleanQuery = (query != null && !query.trim().isEmpty()) ? query.trim() : null;
 
         if (onlyBest) {
             postPage = postRepository.findByIsBestTrueOrderByCreatedAtDesc(pageable);
-        } else if (query != null && !query.trim().isEmpty()) {
-            postPage = postRepository.searchPosts(category, position, query.trim(), pageable);
+        } else if (cleanQuery != null || cleanSymbol != null) {
+            postPage = postRepository.searchPosts(category, position, cleanSymbol, cleanQuery, pageable);
         } else if (category != null && position != null) {
             postPage = postRepository.findByCategoryAndPositionOrderByCreatedAtDesc(category, position, pageable);
         } else if (category != null) {

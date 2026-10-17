@@ -31,8 +31,9 @@ public class CryptoInsightController {
     }
 
     @GetMapping("/news")
-    public ResponseEntity<List<CryptoNewsDto.FastNewsItem>> getFastNews() {
-        List<CryptoNewsDto.FastNewsItem> news = cryptoInsightService.getFastNews();
+    public ResponseEntity<List<CryptoNewsDto.FastNewsItem>> getFastNews(
+            @RequestParam(required = false) String symbol) {
+        List<CryptoNewsDto.FastNewsItem> news = cryptoInsightService.getFastNews(symbol);
         return ResponseEntity.ok(news);
     }
 
