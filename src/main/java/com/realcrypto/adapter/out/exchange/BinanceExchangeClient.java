@@ -81,12 +81,24 @@ public class BinanceExchangeClient implements ExchangeClientPort {
         return filtered;
     }
 
+    private static final String BINANCE_VISION_FALLBACK_URL = "https://data-api.binance.vision/api/v3/ticker/24hr";
+
     @Override
     public List<CryptoPrice> fetchAllPrices() {
         List<CryptoPrice> prices = new ArrayList<>();
         try {
-            // symbol 파라미터 없이 호출 시 전체 24hr 티커 반환
-            BinanceTickerDto[] response = restTemplate.getForObject(binanceUrl, BinanceTickerDto[].class);
+            BinanceTickerDto[] response;
+            try {
+                response = restTemplate.getForObject(binanceUrl, BinanceTickerDto[].class);
+            } catch (HttpStatusCodeException ex) {
+                if (ex.getStatusCode().value() == 451 || ex.getStatusCode().value() == 403) {
+                    log.info("기본 바이낸스 엔드포인트 지역 제한 감지, 글로벌 미러(data-api.binance.vision)로 전환합니다.");
+                    response = restTemplate.getForObject(BINANCE_VISION_FALLBACK_URL, BinanceTickerDto[].class);
+                } else {
+                    throw ex;
+                }
+            }
+
             if (response != null) {
                 LocalDateTime now = LocalDateTime.now();
                 for (BinanceTickerDto dto : response) {
