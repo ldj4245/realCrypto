@@ -15,6 +15,7 @@ import {
   User,
   Flame,
   Trash2,
+  Edit3,
   Send,
   AlertCircle,
   Share2,
@@ -269,13 +270,22 @@ export default function PostDetailPage() {
             </button>
 
             {isAuthor && (
-              <button
-                onClick={handleDeletePost}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-bold transition"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                <span>삭제</span>
-              </button>
+              <>
+                <button
+                  onClick={() => router.push(`/community/write?edit=${post.id}`)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-bold transition"
+                >
+                  <Edit3 className="h-3.5 w-3.5" />
+                  <span>수정</span>
+                </button>
+                <button
+                  onClick={handleDeletePost}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-bold transition"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>삭제</span>
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -287,7 +297,7 @@ export default function PostDetailPage() {
           <div className="flex flex-wrap items-center gap-2 mb-3 text-xs">
             {post.isBest && (
               <span className="px-2.5 py-0.5 rounded-md font-black bg-rose-500 text-white flex items-center gap-1">
-                <Flame className="h-3.5 w-3.5" /> BEST 념글
+                <Flame className="h-3.5 w-3.5" /> BEST
               </span>
             )}
             <span className="px-2.5 py-0.5 rounded-md font-bold bg-slate-100 text-slate-700 border border-slate-200">
@@ -295,12 +305,12 @@ export default function PostDetailPage() {
             </span>
             {post.position === 'LONG' && (
               <span className="px-2.5 py-0.5 rounded-md font-bold bg-rose-50 text-rose-600 border border-rose-200">
-                포지션: 롱 🟢
+                포지션: 롱 관점
               </span>
             )}
             {post.position === 'SHORT' && (
               <span className="px-2.5 py-0.5 rounded-md font-bold bg-blue-50 text-blue-600 border border-blue-200">
-                포지션: 숏 🔴
+                포지션: 숏 관점
               </span>
             )}
             {post.targetSymbol && (
@@ -316,7 +326,7 @@ export default function PostDetailPage() {
                     : 'bg-blue-50 text-blue-600 border-blue-200'
                 }`}
               >
-                {post.profitRate >= 0 ? `수익률 +${post.profitRate}% 💰` : `손실률 ${post.profitRate}% 💧`}
+                {post.profitRate >= 0 ? `수익률 +${post.profitRate}%` : `손실률 ${post.profitRate}%`}
               </span>
             )}
           </div>
