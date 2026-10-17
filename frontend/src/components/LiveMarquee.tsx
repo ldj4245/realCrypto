@@ -103,10 +103,10 @@ export const LiveMarquee: React.FC<LiveMarqueeProps> = ({
 
   return (
     <div className="bg-slate-900 text-slate-200 border-b border-slate-800 text-[11px]">
-      <div className="max-w-[1440px] mx-auto px-3 sm:px-5 h-8 flex items-center justify-between gap-4 overflow-x-auto no-scrollbar">
+      <div className="max-w-[1440px] mx-auto px-3 sm:px-5 h-8 flex items-center justify-between gap-4 overflow-x-auto no-scrollbar whitespace-nowrap">
         
         {/* Left: Real-time Global Market Metrics (Kimpga Terminal Bar) */}
-        <div className="flex items-center gap-3.5 shrink-0">
+        <div className="flex items-center gap-3 sm:gap-3.5 shrink-0 whitespace-nowrap">
           {/* 1. USD/KRW */}
           <div className="flex items-center gap-1.5">
             <span className="text-slate-400 font-medium">환율(USD)</span>

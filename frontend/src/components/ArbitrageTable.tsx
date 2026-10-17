@@ -166,50 +166,50 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
     <div className="bg-white rounded-md border border-slate-200 overflow-hidden">
       
       {/* Top Control & Filter Bar */}
-      <div className="p-3 border-b border-slate-200 bg-slate-50/70 flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+      <div className="p-2.5 sm:p-3 border-b border-slate-200 bg-slate-50/70 flex flex-col md:flex-row md:items-center justify-between gap-2">
         
         {/* Left: Exchange Mode Selector & Toggle Buttons */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-          <div className="flex items-center border border-slate-300 rounded-xs bg-white overflow-hidden shrink-0 text-xs font-bold">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar whitespace-nowrap">
+          <div className="flex items-center border border-slate-300 rounded-xs bg-white overflow-hidden shrink-0 text-[11px] sm:text-xs font-bold whitespace-nowrap">
             <button
               type="button"
               onClick={() => setExchangeMode('UPBIT_BINANCE')}
-              className={`px-3 py-1.5 transition ${
+              className={`px-2.5 sm:px-3 py-1.5 transition whitespace-nowrap ${
                 exchangeMode === 'UPBIT_BINANCE'
                   ? 'bg-slate-900 text-white'
                   : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
-              업비트 · 바이낸스
+              업비트·바이낸스
             </button>
             <button
               type="button"
               onClick={() => setExchangeMode('BITHUMB_BINANCE')}
-              className={`px-3 py-1.5 border-l border-slate-300 transition ${
+              className={`px-2.5 sm:px-3 py-1.5 border-l border-slate-300 transition whitespace-nowrap ${
                 exchangeMode === 'BITHUMB_BINANCE'
                   ? 'bg-slate-900 text-white'
                   : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
-              빗썸 · 바이낸스
+              빗썸·바이낸스
             </button>
             <button
               type="button"
               onClick={() => setExchangeMode('UPBIT_BITHUMB')}
-              className={`px-3 py-1.5 border-l border-slate-300 transition ${
+              className={`px-2.5 sm:px-3 py-1.5 border-l border-slate-300 transition whitespace-nowrap ${
                 exchangeMode === 'UPBIT_BITHUMB'
                   ? 'bg-slate-900 text-white'
                   : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
-              업비트 · 빗썸
+              업비트·빗썸
             </button>
           </div>
 
           <button
             type="button"
             onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xs text-xs font-bold border transition whitespace-nowrap ${
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xs text-[11px] sm:text-xs font-bold border transition whitespace-nowrap shrink-0 ${
               showFavoritesOnly
                 ? 'bg-slate-900 text-white border-slate-900'
                 : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
@@ -222,7 +222,7 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
           <button
             type="button"
             onClick={() => setShowFundingRate(!showFundingRate)}
-            className={`px-2.5 py-1.5 rounded-xs text-xs font-bold border transition whitespace-nowrap ${
+            className={`hidden lg:inline-flex px-2.5 py-1.5 rounded-xs text-xs font-bold border transition whitespace-nowrap shrink-0 ${
               showFundingRate
                 ? 'bg-slate-900 text-white border-slate-900'
                 : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
@@ -233,7 +233,7 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
         </div>
 
         {/* Right: Search Input & Count */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <div className="relative flex-1 sm:w-56">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
             <input
@@ -244,7 +244,7 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
               className="w-full bg-white border border-slate-300 rounded-xs pl-8 pr-3 py-1.5 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 transition"
             />
           </div>
-          <span className="text-[11px] text-slate-500 font-bold tabular-nums whitespace-nowrap hidden sm:inline">
+          <span className="text-[11px] text-slate-500 font-bold tabular-nums whitespace-nowrap shrink-0">
             {filteredAndSortedItems.length}종목
           </span>
         </div>
@@ -255,10 +255,10 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-600 font-bold text-[11px]">
+            <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-600 font-bold text-[11px] whitespace-nowrap">
               <th
                 onClick={() => handleSort('symbol')}
-                className="py-2.5 px-3 cursor-pointer hover:text-slate-900 transition select-none"
+                className="py-2 px-2.5 sm:py-2.5 sm:px-3 cursor-pointer hover:text-slate-900 transition select-none"
               >
                 <div className="flex items-center gap-1">
                   <span>종목명</span>
@@ -268,23 +268,26 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
 
               <th
                 onClick={() => handleSort('price')}
-                className="py-2.5 px-3 cursor-pointer hover:text-slate-900 transition select-none text-right"
+                className="py-2 px-2 sm:py-2.5 sm:px-3 cursor-pointer hover:text-slate-900 transition select-none text-right"
               >
                 <div className="flex items-center justify-end gap-1">
-                  <span>
+                  <span className="sm:hidden">
+                    {exchangeMode === 'BITHUMB_BINANCE' ? '빗썸 / 해외가' : '현재가 / 해외가'}
+                  </span>
+                  <span className="hidden sm:inline">
                     {exchangeMode === 'BITHUMB_BINANCE' ? '빗썸 현재가(원)' : '업비트 현재가(원)'}
                   </span>
                   <ArrowUpDown className="h-3 w-3 text-slate-400" />
                 </div>
               </th>
 
-              <th className="py-2.5 px-3 text-right">
+              <th className="py-2.5 px-3 text-right hidden sm:table-cell">
                 {exchangeMode === 'UPBIT_BITHUMB' ? '빗썸 현재가(원)' : '바이낸스 (원화환산 / USD)'}
               </th>
 
               <th
                 onClick={() => handleSort('change')}
-                className="py-2.5 px-3 cursor-pointer hover:text-slate-900 transition select-none text-right"
+                className="py-2 px-2 sm:py-2.5 sm:px-3 cursor-pointer hover:text-slate-900 transition select-none text-right"
               >
                 <div className="flex items-center justify-end gap-1">
                   <span>전일대비</span>
@@ -294,10 +297,10 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
 
               <th
                 onClick={() => handleSort('premium')}
-                className="py-2.5 px-3 cursor-pointer hover:text-slate-900 transition select-none text-right min-w-[130px]"
+                className="py-2 px-2.5 sm:py-2.5 sm:px-3 cursor-pointer hover:text-slate-900 transition select-none text-right"
               >
                 <div className="flex items-center justify-end gap-1">
-                  <span>{exchangeMode === 'UPBIT_BITHUMB' ? '국내 격차 (차액)' : '김프 (차액)'}</span>
+                  <span>{exchangeMode === 'UPBIT_BITHUMB' ? '국내 격차' : '김프 (차액)'}</span>
                   <ArrowUpDown className="h-3 w-3 text-slate-400" />
                 </div>
               </th>
@@ -310,7 +313,7 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
 
               <th
                 onClick={() => handleSort('volume')}
-                className="py-2.5 px-3 cursor-pointer hover:text-slate-900 transition select-none text-right hidden sm:table-cell"
+                className="py-2.5 px-3 cursor-pointer hover:text-slate-900 transition select-none text-right hidden md:table-cell"
               >
                 <div className="flex items-center justify-end gap-1">
                   <span>거래대금(24h)</span>
@@ -334,6 +337,7 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
 
                 let primaryPrice: number | null = null;
                 let primaryChange: number | null = null;
+                let secondaryPriceKrw: number | null = null;
                 let secondaryPriceNode: React.ReactNode = null;
                 let premium: number | null = null;
                 let diffKrw: number | null = null;
@@ -341,6 +345,7 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
                 if (exchangeMode === 'UPBIT_BINANCE') {
                   primaryPrice = item.upbitPrice;
                   primaryChange = item.upbitChangeRate;
+                  secondaryPriceKrw = item.binancePriceKrw;
                   premium = item.upbitBinancePremium;
                   diffKrw =
                     item.upbitPrice && item.binancePriceKrw
@@ -359,6 +364,7 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
                 } else if (exchangeMode === 'BITHUMB_BINANCE') {
                   primaryPrice = item.bithumbPrice;
                   primaryChange = item.bithumbChangeRate;
+                  secondaryPriceKrw = item.binancePriceKrw;
                   premium = item.bithumbBinancePremium;
                   diffKrw =
                     item.bithumbPrice && item.binancePriceKrw
@@ -377,6 +383,7 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
                 } else {
                   primaryPrice = item.upbitPrice;
                   primaryChange = item.upbitChangeRate;
+                  secondaryPriceKrw = item.bithumbPrice;
                   premium = item.upbitBithumbGap;
                   diffKrw =
                     item.upbitPrice && item.bithumbPrice
@@ -405,7 +412,7 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
                   <tr
                     key={item.symbol}
                     onClick={() => onSelectCoin(item)}
-                    className={`transition duration-100 cursor-pointer ${
+                    className={`transition duration-100 cursor-pointer whitespace-nowrap ${
                       isSelected
                         ? 'bg-blue-50/40'
                         : 'hover:bg-slate-50'
@@ -418,15 +425,15 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
                     }`}
                   >
                     {/* 1. Symbol & Korean Name */}
-                    <td className="py-2.5 px-3">
-                      <div className="flex items-center gap-2">
+                    <td className="py-2 px-2.5 sm:py-2.5 sm:px-3">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             toggleFavorite(item.symbol);
                           }}
-                          className="p-0.5 text-slate-300 hover:text-amber-500 transition"
+                          className="p-0.5 text-slate-300 hover:text-amber-500 transition shrink-0"
                           title={favorited ? '관심종목 해제' : '관심종목 등록'}
                         >
                           <Star
@@ -437,16 +444,16 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
                         </button>
 
                         <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-slate-900 text-xs leading-tight">
+                          <div className="flex items-center gap-1">
+                            <span className="font-bold text-slate-900 text-xs leading-tight truncate max-w-[90px] sm:max-w-none">
                               {item.nameKr}
                             </span>
                             {item.isWalletNormal === false && (
                               <span
-                                className="px-1 py-0.2 rounded-xs text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-300 leading-none"
+                                className="px-1 py-0.2 rounded-xs text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-300 leading-none shrink-0"
                                 title="거래소 간 심볼 불일치 또는 입출금 중단으로 인한 시세 괴리"
                               >
-                                괴리주의
+                                괴리
                               </span>
                             )}
                           </div>
@@ -472,10 +479,10 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
                       </div>
                     </td>
 
-                    {/* 2. Primary Price */}
-                    <td className="py-2.5 px-3 text-right tabular-nums">
+                    {/* 2. Primary Price (+ Secondary Price Subline on Mobile) */}
+                    <td className="py-2 px-2 sm:py-2.5 sm:px-3 text-right tabular-nums">
                       <span
-                        className={`font-bold text-xs ${
+                        className={`font-bold text-xs block leading-tight ${
                           primaryChange !== null && primaryChange > 0
                             ? 'text-red-600'
                             : primaryChange !== null && primaryChange < 0
@@ -485,13 +492,16 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
                       >
                         {formatKRW(primaryPrice)}
                       </span>
+                      <span className="sm:hidden text-[10px] text-slate-400 font-medium block leading-tight mt-0.5">
+                        {formatKRW(secondaryPriceKrw)}
+                      </span>
                     </td>
 
-                    {/* 3. Secondary Price */}
-                    <td className="py-2.5 px-3 text-right">{secondaryPriceNode}</td>
+                    {/* 3. Secondary Price (Tablet/Desktop) */}
+                    <td className="py-2.5 px-3 text-right hidden sm:table-cell">{secondaryPriceNode}</td>
 
                     {/* 4. 24h Change Rate */}
-                    <td className="py-2.5 px-3 text-right tabular-nums">
+                    <td className="py-2 px-2 sm:py-2.5 sm:px-3 text-right tabular-nums">
                       {primaryChange !== null && primaryChange !== undefined ? (
                         <span
                           className={`font-bold text-xs ${
@@ -507,7 +517,7 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
                     </td>
 
                     {/* 5. Kimchi Premium % + KRW Diff (Kimpga Signature Column) */}
-                    <td className="py-2.5 px-3 text-right tabular-nums">
+                    <td className="py-2 px-2.5 sm:py-2.5 sm:px-3 text-right tabular-nums">
                       {premium !== null && premium !== undefined ? (
                         <div>
                           <span
@@ -553,7 +563,7 @@ export const ArbitrageTable: React.FC<ArbitrageTableProps> = ({
                     )}
 
                     {/* 7. 24h Trade Volume */}
-                    <td className="py-2.5 px-3 text-right tabular-nums hidden sm:table-cell">
+                    <td className="py-2.5 px-3 text-right tabular-nums hidden md:table-cell">
                       <span className="font-semibold text-slate-600 text-[11px]">
                         {formatTradeValueKRW(totalVolume)}
                       </span>

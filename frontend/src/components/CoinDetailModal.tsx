@@ -182,37 +182,37 @@ export const CoinDetailModal: React.FC<CoinDetailModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-end sm:self-auto">
-            <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200/60 text-xs font-extrabold">
+          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+            <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200/60 text-xs font-extrabold whitespace-nowrap">
               <button
                 type="button"
                 onClick={() => setActiveTab('CHART')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition ${
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition whitespace-nowrap ${
                   activeTab === 'CHART'
                     ? 'bg-white text-blue-600 shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <BarChart2 className="h-3.5 w-3.5" />
+                <BarChart2 className="h-3.5 w-3.5 shrink-0" />
                 <span>실시간 차트 & 시세</span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('FEED')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition ${
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition whitespace-nowrap ${
                   activeTab === 'FEED'
                     ? 'bg-white text-blue-600 shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <MessageSquare className="h-3.5 w-3.5" />
+                <MessageSquare className="h-3.5 w-3.5 shrink-0" />
                 <span>종목 뉴스 & 의견</span>
               </button>
             </div>
 
             <button
               onClick={onClose}
-              className="p-2 rounded-xl bg-slate-100 text-slate-500 hover:text-slate-900 hover:bg-slate-200 transition"
+              className="p-2 rounded-xl bg-slate-100 text-slate-500 hover:text-slate-900 hover:bg-slate-200 transition shrink-0"
               title="닫기"
             >
               <X className="h-4 w-4" />

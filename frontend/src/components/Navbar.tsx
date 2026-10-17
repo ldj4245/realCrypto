@@ -63,11 +63,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <>
       <header className="sticky top-0 z-30 bg-white border-b border-slate-200">
-        <div className="max-w-[1440px] mx-auto px-3 sm:px-5 h-12 flex items-center justify-between gap-4">
+        {/* Row 1: Brand + Desktop Nav + Right Action Controls */}
+        <div className="max-w-[1440px] mx-auto px-3 sm:px-5 h-12 flex items-center justify-between gap-2 sm:gap-4">
           
-          {/* Left: Brand Identity & Terminal Tabs */}
-          <div className="flex items-center gap-6 h-full">
-            <Link href="/" className="flex items-center gap-2 shrink-0">
+          {/* Left: Brand Identity & Desktop Terminal Tabs */}
+          <div className="flex items-center gap-6 h-full min-w-0">
+            <Link href="/" className="flex items-center gap-1.5 shrink-0 whitespace-nowrap">
               <span className="font-black text-base tracking-tight text-slate-900">
                 REAL<span className="text-blue-700">CRYPTO</span>
               </span>
@@ -76,11 +77,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </Link>
 
-            {/* Navigation Links (Upbit / Kimpga style underline tabs) */}
-            <nav className="flex items-center h-full text-xs font-bold">
+            {/* Desktop Navigation Links (hidden on mobile, shown on md+) */}
+            <nav className="hidden md:flex items-center h-full text-xs font-bold whitespace-nowrap">
               <Link
                 href="/"
-                className={`h-full flex items-center px-3 border-b-2 transition ${
+                className={`h-full flex items-center px-3 border-b-2 transition whitespace-nowrap ${
                   isDashboard
                     ? 'border-slate-900 text-slate-900 font-extrabold'
                     : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -90,7 +91,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </Link>
               <Link
                 href="/news"
-                className={`h-full flex items-center px-3 border-b-2 transition ${
+                className={`h-full flex items-center px-3 border-b-2 transition whitespace-nowrap ${
                   isNews
                     ? 'border-slate-900 text-slate-900 font-extrabold'
                     : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -100,7 +101,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </Link>
               <Link
                 href="/community"
-                className={`h-full flex items-center px-3 border-b-2 transition ${
+                className={`h-full flex items-center px-3 border-b-2 transition whitespace-nowrap ${
                   isCommunity
                     ? 'border-slate-900 text-slate-900 font-extrabold'
                     : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -112,11 +113,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Right: Terminal Controls & Auth */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             
-            {/* Custom Exchange Rate Input on Dashboard */}
+            {/* Custom Exchange Rate Input on Dashboard (Desktop) */}
             {isDashboard && setExchangeRate && (
-              <div className="hidden md:flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-50 border border-slate-200 text-[11px]">
+              <div className="hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-50 border border-slate-200 text-[11px] whitespace-nowrap">
                 <span className="text-slate-500 font-semibold">적용환율</span>
                 <input
                   type="number"
@@ -132,7 +133,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Profit Calculator Button */}
             <button
               onClick={() => setIsCalcOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-bold text-xs transition"
+              className="flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 rounded-md bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-bold text-xs transition whitespace-nowrap shrink-0"
               title="차익거래 실수령 계산기"
             >
               <Calculator className="h-3.5 w-3.5 text-slate-600" />
@@ -143,7 +144,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="relative">
               <button
                 onClick={() => setIsAlertOpen((prev) => !prev)}
-                className={`relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border text-xs font-bold transition ${
+                className={`relative flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-md border text-xs font-bold transition whitespace-nowrap shrink-0 ${
                   isAlertOpen
                     ? 'bg-slate-900 text-white border-slate-900'
                     : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-300'
@@ -151,16 +152,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                 title="목표 김프 도달 알림"
               >
                 <Bell className="h-3.5 w-3.5" />
-                <span className="hidden lg:inline">김프 알림</span>
+                <span className="hidden xl:inline">김프 알림</span>
                 {activeAlertCount > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-xs bg-blue-600 text-white text-[10px] font-extrabold tabular-nums">
+                  <span className="px-1 py-0.2 rounded-xs bg-blue-600 text-white text-[10px] font-extrabold tabular-nums">
                     {activeAlertCount}
                   </span>
                 )}
               </button>
 
               {isAlertOpen && (
-                <div className="absolute right-0 mt-1.5 w-80 bg-white rounded-md border border-slate-300 shadow-lg z-50 p-3.5">
+                <div className="fixed left-3 right-3 top-24 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-1.5 sm:w-80 bg-white rounded-md border border-slate-300 shadow-lg z-50 p-3.5">
                   <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-200">
                     <div>
                       <h4 className="text-xs font-extrabold text-slate-900">목표 김치 프리미엄 알림</h4>
@@ -256,7 +257,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {isDashboard && (
               <>
                 <div
-                  className={`hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-bold border ${
+                  className={`hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-bold border whitespace-nowrap ${
                     isStreamConnected
                       ? 'bg-white text-slate-800 border-slate-300'
                       : 'bg-slate-100 text-slate-500 border-slate-200'
@@ -275,7 +276,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button
                     onClick={onRefresh}
                     disabled={isLoading}
-                    className="p-1.5 rounded-md bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 transition disabled:opacity-50"
+                    className="p-1.5 rounded-md bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 transition disabled:opacity-50 shrink-0"
                     title="시세 수동 갱신"
                   >
                     <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
@@ -286,14 +287,14 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* User Auth */}
             {isLoggedIn && user ? (
-              <div className="flex items-center gap-1.5 pl-2 border-l border-slate-200">
-                <div className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-xs text-slate-900 font-bold">
-                  <User className="h-3 w-3 text-slate-600" />
-                  <span>{user.nickname}</span>
+              <div className="flex items-center gap-1 pl-1.5 sm:pl-2 border-l border-slate-200 shrink-0">
+                <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-slate-100 border border-slate-200 text-xs text-slate-900 font-bold whitespace-nowrap">
+                  <User className="h-3 w-3 text-slate-600 shrink-0" />
+                  <span className="max-w-[72px] sm:max-w-none truncate">{user.nickname}</span>
                 </div>
                 <button
                   onClick={logout}
-                  className="p-1.5 rounded-md text-slate-500 hover:text-red-600 hover:bg-slate-100 transition"
+                  className="p-1.5 rounded-md text-slate-500 hover:text-red-600 hover:bg-slate-100 transition shrink-0"
                   title="로그아웃"
                 >
                   <LogOut className="h-3.5 w-3.5" />
@@ -302,7 +303,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             ) : (
               <button
                 onClick={() => openAuthModal('login')}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition whitespace-nowrap shrink-0"
               >
                 <LogIn className="h-3.5 w-3.5" />
                 <span>로그인</span>
@@ -312,6 +313,40 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
         </div>
+
+        {/* Row 2: Mobile-Only 3-Tab Navigation Bar (Upbit / Kimpga Mobile Web Style) */}
+        <nav className="md:hidden grid grid-cols-3 border-t border-slate-200 bg-slate-50/70 text-xs font-bold">
+          <Link
+            href="/"
+            className={`py-2 text-center border-b-2 transition whitespace-nowrap ${
+              isDashboard
+                ? 'border-slate-900 text-slate-900 font-extrabold bg-white'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            시세·김프 터미널
+          </Link>
+          <Link
+            href="/news"
+            className={`py-2 text-center border-b-2 transition whitespace-nowrap ${
+              isNews
+                ? 'border-slate-900 text-slate-900 font-extrabold bg-white'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            실시간 속보·온체인
+          </Link>
+          <Link
+            href="/community"
+            className={`py-2 text-center border-b-2 transition whitespace-nowrap ${
+              isCommunity
+                ? 'border-slate-900 text-slate-900 font-extrabold bg-white'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            종목 토론·커뮤니티
+          </Link>
+        </nav>
       </header>
 
       <ArbitrageCalculatorModal isOpen={isCalcOpen} onClose={() => setIsCalcOpen(false)} />

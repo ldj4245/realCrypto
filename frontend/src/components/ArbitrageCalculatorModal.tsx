@@ -110,19 +110,19 @@ export const ArbitrageCalculatorModal: React.FC<ArbitrageCalculatorModalProps> =
         </div>
 
         {/* Route Recommendations Table */}
-        <div className="flex-1 overflow-y-auto border border-slate-200 rounded-xs">
+        <div className="flex-1 overflow-x-auto overflow-y-auto border border-slate-200 rounded-xs">
           {isLoading ? (
             <div className="py-12 text-center text-xs text-slate-400 font-medium">
               실시간 김프 및 수수료 연산 중...
             </div>
           ) : (
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
               <thead>
                 <tr className="bg-slate-100 border-b border-slate-200 text-slate-600 font-bold text-[11px]">
-                  <th className="py-2 px-3">순위 · 코인</th>
-                  <th className="py-2 px-3 text-right">현재 김프</th>
-                  <th className="py-2 px-3 text-right">출금 수수료 · 소요시간</th>
-                  <th className="py-2 px-3 text-right">예상 순수익 (수익률)</th>
+                  <th className="py-2 px-2.5 sm:px-3">순위 · 코인</th>
+                  <th className="py-2 px-2 sm:px-3 text-right">현재 김프</th>
+                  <th className="py-2 px-2 sm:px-3 text-right hidden sm:table-cell">출금 수수료 · 소요시간</th>
+                  <th className="py-2 px-2.5 sm:px-3 text-right">예상 순수익 (수익률)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -146,16 +146,16 @@ export const ArbitrageCalculatorModal: React.FC<ArbitrageCalculatorModalProps> =
                           </div>
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 text-right tabular-nums font-bold text-slate-800">
+                      <td className="py-2.5 px-2 sm:px-3 text-right tabular-nums font-bold text-slate-800">
                         {route.premiumPercent >= 0 ? `+${route.premiumPercent}%` : `${route.premiumPercent}%`}
                       </td>
-                      <td className="py-2.5 px-3 text-right tabular-nums text-slate-600">
+                      <td className="py-2.5 px-2 sm:px-3 text-right tabular-nums text-slate-600 hidden sm:table-cell">
                         <span className="block font-semibold">{route.transferFeeKrw.toLocaleString()}원</span>
                         <span className="text-[10px] text-slate-400 inline-flex items-center gap-0.5">
                           <Clock className="h-2.5 w-2.5" /> 약 {route.estimatedMinutes}분
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-right tabular-nums">
+                      <td className="py-2.5 px-2.5 sm:px-3 text-right tabular-nums">
                         <span
                           className={`font-extrabold block ${
                             isPositive ? 'text-red-600' : 'text-blue-600'

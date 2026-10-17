@@ -11,11 +11,22 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 /* 숫자 고정폭 (시세 변동 시 흔들림 방지) */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+/* 가로 스크롤 영역 스크롤바 숨김 (모바일 터치 스크롤 유지) */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* 실시간 가격 변동 플래시 효과 */
