@@ -150,3 +150,10 @@ src/main/java/com/realcrypto
     - 기존 상세 조회 로직은 엔티티를 조회한 뒤 `post.incrementViewCount()` 더티 체킹으로 조회수를 올리고 있어, 동시에 여러 요청이 들어올 때 조회수 증가분이 유실되는 동시성 문제가 있었음
     - `@Modifying(clearAutomatically = true)` 기반의 원자적 벌크 업데이트 쿼리(`UPDATE Post p SET p.viewCount = p.viewCount + 1 WHERE p.id = :id`)로 변경하여 동시 조회 시에도 정합성이 깨지지 않도록 개선
 
+### 2026-08-26
+- **김프가·코인니스 스타일 고밀도 금융 터미널 UI 개편 및 뉴스·온체인 실데이터 정합성 보완**
+  - 기존 카드형 UI의 불필요한 여백을 제거하고, 메인 화면을 12컬럼 금융 터미널 레이아웃(상단 도킹형 TradingView 차트 및 3사 호가/스프레드 비교 패널 + 하단 고밀도 김프 테이블 + 우측 실시간 속보·온체인·커뮤니티 사이드바)으로 전면 개편
+  - 시세 테이블에 김치 프리미엄(`%`)과 함께 실제 원화 가격 차액(`차액 원`)이 동시에 표시되도록 개선하고, 상단 지표 바에 실시간 환율, 실효 테더(`USDT/KRW`) 환산가, 평균 김프, 바이낸스 BTC 실시간 선물 펀딩비(`8h`), 공포·탐욕 지수를 연동
+  - **트러블슈팅 (구글 뉴스 RSS 원문 링크 누락 및 온체인 주소 표기 개선)**:
+    - `RealNewsClient`에서 구글 뉴스 RSS의 `<link>` 태그가 DTO에 매핑되지 않아 기사 클릭 시 원문 이동이 불가했던 문제를 수정하고, GMT 기준 `<pubDate>`를 `Asia/Seoul` 시간대로 변환하여 한국 시각이 정확히 표시되도록 보정
+    - `RealWhaleClient`에서 임의 지갑 별칭과 하드코딩 폴백을 제거하고, `blockchain.info` 미승인 트랜잭션의 실제 UTXO 송신 주소(`inputs.prev_out.addr`), 최대 출력 수신 주소(`out.addr`), 수수료(`sats`), 트랜잭션 해시(`txHash`)를 추출해 `mempool.space/tx/{hash}` 블록 탐색기로 직접 검증할 수 있도록 개선
